@@ -30,7 +30,7 @@
       },
       {
         "command": "size-tree.descend",
-        "title": "descend",
+        "title": "ascend/descend",
         "icon": "$(arrow-down)"
       }
     ],

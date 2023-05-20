@@ -12,7 +12,7 @@ enum Commands {
 interface FileInfo {
     filename: string;
     size: number;
-    humanReadableSize: number;
+    humanReadableSize: string;
     fsPath: string;
 }
 
@@ -22,9 +22,10 @@ export function activate(context: vscode.ExtensionContext) {
     const viewId = 'sizeTree';
     const refreshEvent = new vscode.EventEmitter<void>();
     const sortEvent = new vscode.EventEmitter<SortType>();
+    const badgeTag = 'SizeTreeBadge';
 
     const convertBytes = function (bytes: number) {
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
         if (bytes === 0) {
             return 'n/a';
         }
@@ -43,7 +44,13 @@ export function activate(context: vscode.ExtensionContext) {
     class TreeItem extends vscode.TreeItem {
         constructor(file: FileInfo, collapsibleState: vscode.TreeItemCollapsibleState) {
             const fileUri = vscode.Uri.file(file.fsPath);
-            super(fileUri, collapsibleState);
+            super(
+                fileUri.with({
+                    scheme: badgeTag,
+                    query: file.humanReadableSize.replace(/[\d\. ]+/, '').replace('n/a', '0'),
+                }),
+                collapsibleState,
+            );
             this.iconPath = vscode.ThemeIcon.File;
             this.tooltip = new vscode.MarkdownString(`${file.fsPath} (${file.humanReadableSize})`);
             this.description = `${file.humanReadableSize}`;
@@ -116,10 +123,8 @@ export function activate(context: vscode.ExtensionContext) {
                 string,
                 boolean
             >;
-            console.log(exclude, 'exclude');
             let pattern = Object.keys({ ...exclude, ...watcherExclude }).join(',');
-            console.log(pattern, 'pattern');
-            vscode.workspace.findFiles('', pattern, 30000).then(async (uris) => {
+            vscode.workspace.findFiles('front_end/**', pattern, 30000).then(async (uris) => {
                 let list = await Promise.all(
                     uris.map(async (item) => {
                         try {
@@ -138,7 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
             });
         }
         getTreeItem(element: TreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
-            return element;
+            return Promise.resolve(element);
         }
         getChildren(element?: TreeItem | undefined): vscode.ProviderResult<TreeItem[]> {
             if (!element) {
@@ -150,6 +155,21 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
+    class FileDecorationProvider implements vscode.FileDecorationProvider {
+        provideFileDecoration(
+            uri: vscode.Uri,
+            token: vscode.CancellationToken,
+        ): vscode.ProviderResult<vscode.FileDecoration> {
+            if (uri.scheme === badgeTag) {
+                let badge = uri.query;
+                return {
+                    badge,
+                };
+            }
+        }
+    }
+
+    context.subscriptions.push(vscode.window.registerFileDecorationProvider(new FileDecorationProvider()));
     context.subscriptions.push(
         vscode.commands.registerCommand(Commands.refresh, refresh),
         vscode.commands.registerCommand(Commands.sortByName, sortByName),
