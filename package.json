@@ -26,12 +26,16 @@
       {
         "command": "size-tree.sortBySize",
         "title": "sort by size",
-        "icon": "$(list-ordered)"
+        "icon": "$(archive)"
       },
       {
         "command": "size-tree.descend",
         "title": "ascend/descend",
         "icon": "$(arrow-down)"
+      },
+      {
+        "command": "size-tree.deleteSelected",
+        "title": "delete selected files/dirs"
       }
     ],
     "views": {
@@ -63,6 +67,12 @@
           "command": "size-tree.sortByName",
           "when": "view == sizeTree",
           "group": "navigation@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "size-tree.deleteSelected",
+          "when": "view == sizeTree && viewItem == sizeTree.fileItem"
         }
       ]
     }

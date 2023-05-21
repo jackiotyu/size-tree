@@ -7,6 +7,11 @@ enum Commands {
     sortByName = 'size-tree.sortByName',
     sortBySize = 'size-tree.sortBySize',
     descend = 'size-tree.descend',
+    deleteSelected = 'size-tree.deleteSelected',
+}
+
+enum TreeItemContext {
+    fileItem = 'sizeTree.fileItem'
 }
 
 interface FileInfo {
@@ -36,10 +41,6 @@ export function activate(context: vscode.ExtensionContext) {
         return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
     };
 
-    const refresh = () => refreshEvent.fire();
-    const sortByName = () => sortEvent.fire('name');
-    const sortBySize = () => sortEvent.fire('size');
-    const descend = () => sortEvent.fire('descend');
 
     class TreeItem extends vscode.TreeItem {
         constructor(file: FileInfo, collapsibleState: vscode.TreeItemCollapsibleState) {
@@ -54,6 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
             this.iconPath = vscode.ThemeIcon.File;
             this.tooltip = new vscode.MarkdownString(`${file.fsPath} (${file.humanReadableSize})`);
             this.description = `${file.humanReadableSize}`;
+            this.contextValue = TreeItemContext.fileItem;
             this.command = {
                 command: 'vscode.open',
                 arguments: [fileUri],
@@ -67,7 +69,7 @@ export function activate(context: vscode.ExtensionContext) {
         private _onDidChangeTreeData: vscode.EventEmitter<void> = new vscode.EventEmitter();
         readonly onDidChangeTreeData: vscode.Event<void> = this._onDidChangeTreeData.event;
         private stop?: (value: unknown) => void;
-        private asc: boolean = true;
+        private asc: boolean = false;
         private sortKey: 'filename' | 'size' = 'size';
         constructor() {
             this.refresh();
@@ -78,9 +80,11 @@ export function activate(context: vscode.ExtensionContext) {
             switch (sortType) {
                 case 'name':
                     this.sortKey = 'filename';
+                    this.asc = true;
                     return this.sortByName();
                 case 'size':
                     this.sortKey = 'size';
+                    this.asc = false;
                     return this.sortBySize();
                 case 'descend':
                     this.asc = !this.asc;
@@ -110,11 +114,11 @@ export function activate(context: vscode.ExtensionContext) {
             this._onDidChangeTreeData.fire();
         }
         sortByName() {
-            this.files = this.files.sort((a, b) => a.filename.localeCompare(b.filename));
+            this.files = this.files.sort(this.sortFunc);
             this._onDidChangeTreeData.fire();
         }
         sortBySize() {
-            this.files = this.files.sort((a, b) => a.size - b.size);
+            this.files = this.files.sort(this.sortFunc);
             this._onDidChangeTreeData.fire();
         }
         refresh() {
@@ -169,17 +173,28 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
+
+    const refresh = () => refreshEvent.fire();
+    const sortByName = () => sortEvent.fire('name');
+    const sortBySize = () => sortEvent.fire('size');
+    const descend = () => sortEvent.fire('descend');
+    const deleteSelected = (treeItem: TreeItem, selectedItems: TreeItem[]) => {
+        console.log(selectedItems, 'selectedItems');
+    };
+
     context.subscriptions.push(vscode.window.registerFileDecorationProvider(new FileDecorationProvider()));
     context.subscriptions.push(
         vscode.commands.registerCommand(Commands.refresh, refresh),
         vscode.commands.registerCommand(Commands.sortByName, sortByName),
         vscode.commands.registerCommand(Commands.sortBySize, sortBySize),
         vscode.commands.registerCommand(Commands.descend, descend),
+        vscode.commands.registerCommand(Commands.deleteSelected, deleteSelected),
     );
     context.subscriptions.push(
         vscode.window.createTreeView(viewId, {
             treeDataProvider: new SizeTreeDataProvider(),
             showCollapseAll: true,
+            canSelectMany: true,
         }),
     );
     context.subscriptions.push(refreshEvent, sortEvent);
