@@ -26,12 +26,17 @@
       {
         "command": "size-tree.sortBySize",
         "title": "sort by size",
-        "icon": "$(archive)"
+        "icon": "$(file)"
       },
       {
         "command": "size-tree.descend",
-        "title": "ascend/descend",
+        "title": "descend",
         "icon": "$(arrow-down)"
+      },
+      {
+        "command": "size-tree.ascend",
+        "title": "ascend",
+        "icon": "$(arrow-up)"
       },
       {
         "command": "size-tree.deleteSelected",
@@ -55,7 +60,12 @@
         },
         {
           "command": "size-tree.descend",
-          "when": "view == sizeTree",
+          "when": "view == sizeTree && !sizeTree.sort",
+          "group": "navigation@3"
+        },
+        {
+          "command": "size-tree.ascend",
+          "when": "view == sizeTree && sizeTree.sort",
           "group": "navigation@3"
         },
         {

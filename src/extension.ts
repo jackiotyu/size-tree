@@ -7,6 +7,7 @@ enum Commands {
     sortByName = 'size-tree.sortByName',
     sortBySize = 'size-tree.sortBySize',
     descend = 'size-tree.descend',
+    ascend = 'size-tree.ascend',
     deleteSelected = 'size-tree.deleteSelected',
 }
 
@@ -21,7 +22,7 @@ interface FileInfo {
     fsPath: string;
 }
 
-type SortType = 'name' | 'size' | 'descend';
+type SortType = 'name' | 'size' | 'toggleSort';
 
 export function activate(context: vscode.ExtensionContext) {
     const viewId = 'sizeTree';
@@ -53,7 +54,8 @@ export function activate(context: vscode.ExtensionContext) {
                 collapsibleState,
             );
             this.iconPath = vscode.ThemeIcon.File;
-            this.tooltip = new vscode.MarkdownString(`${file.fsPath} (${file.humanReadableSize})`);
+            this.tooltip = new vscode.MarkdownString(`- path: *${file.fsPath}*\n`);
+            this.tooltip.appendMarkdown(`- size: ${file.humanReadableSize}`);
             this.description = `${file.humanReadableSize}`;
             this.contextValue = TreeItemContext.fileItem;
             this.command = {
@@ -69,12 +71,20 @@ export function activate(context: vscode.ExtensionContext) {
         private _onDidChangeTreeData: vscode.EventEmitter<void> = new vscode.EventEmitter();
         readonly onDidChangeTreeData: vscode.Event<void> = this._onDidChangeTreeData.event;
         private stop?: (value: unknown) => void;
-        private asc: boolean = false;
+        private _asc: boolean = false;
         private sortKey: 'filename' | 'size' = 'size';
         constructor() {
             this.refresh();
             refreshEvent.event(this.refresh.bind(this));
             sortEvent.event(this.sort.bind(this));
+            vscode.commands.executeCommand('setContext', 'sizeTree.sort', this._asc);
+        }
+        get asc() {
+            return this._asc;
+        }
+        set asc(value) {
+            vscode.commands.executeCommand('setContext', 'sizeTree.sort', value);
+            this._asc = value;
         }
         sort(sortType: SortType) {
             switch (sortType) {
@@ -86,7 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
                     this.sortKey = 'size';
                     this.asc = false;
                     return this.sortBySize();
-                case 'descend':
+                case 'toggleSort':
                     this.asc = !this.asc;
                     return this.descend();
             }
@@ -128,7 +138,7 @@ export function activate(context: vscode.ExtensionContext) {
                 boolean
             >;
             let pattern = Object.keys({ ...exclude, ...watcherExclude }).join(',');
-            vscode.workspace.findFiles('front_end/**', pattern, 30000).then(async (uris) => {
+            vscode.workspace.findFiles('', pattern).then(async (uris) => {
                 let list = await Promise.all(
                     uris.map(async (item) => {
                         try {
@@ -177,7 +187,7 @@ export function activate(context: vscode.ExtensionContext) {
     const refresh = () => refreshEvent.fire();
     const sortByName = () => sortEvent.fire('name');
     const sortBySize = () => sortEvent.fire('size');
-    const descend = () => sortEvent.fire('descend');
+    const toggleSort = () => sortEvent.fire('toggleSort');
     const deleteSelected = (treeItem: TreeItem, selectedItems: TreeItem[]) => {
         console.log(selectedItems, 'selectedItems');
     };
@@ -187,7 +197,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(Commands.refresh, refresh),
         vscode.commands.registerCommand(Commands.sortByName, sortByName),
         vscode.commands.registerCommand(Commands.sortBySize, sortBySize),
-        vscode.commands.registerCommand(Commands.descend, descend),
+        vscode.commands.registerCommand(Commands.descend, toggleSort),
+        vscode.commands.registerCommand(Commands.ascend, toggleSort),
         vscode.commands.registerCommand(Commands.deleteSelected, deleteSelected),
     );
     context.subscriptions.push(
