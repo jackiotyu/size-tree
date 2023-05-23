@@ -1,13 +1,17 @@
 {
   "name": "size-tree",
-  "displayName": "size-tree",
-  "description": "display file tree size",
+  "displayName": "Size Tree",
+  "description": "Quick show file size and delete files by one click.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.78.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "file size tree",
+    "delete files"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
@@ -60,22 +64,22 @@
         },
         {
           "command": "size-tree.descend",
-          "when": "view == sizeTree && !sizeTree.sort",
+          "when": "view == sizeTree && !sizeTree.asc",
           "group": "navigation@3"
         },
         {
           "command": "size-tree.ascend",
-          "when": "view == sizeTree && sizeTree.sort",
+          "when": "view == sizeTree && sizeTree.asc",
           "group": "navigation@3"
         },
         {
           "command": "size-tree.sortBySize",
-          "when": "view == sizeTree",
+          "when": "view == sizeTree && sizeTree.sortKey === 'size'",
           "group": "navigation@2"
         },
         {
           "command": "size-tree.sortByName",
-          "when": "view == sizeTree",
+          "when": "view == sizeTree && sizeTree.sortKey === 'filename'",
           "group": "navigation@1"
         }
       ],

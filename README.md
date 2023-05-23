@@ -1,6 +1,10 @@
 # size-tree
 
+![preview](images/preview.png)
 ## Features
 
-Display file tree with file size
+Quick show file size and delete files by one click.
+
+- sort by name
+- sort by file size
 

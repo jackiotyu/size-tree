@@ -54,7 +54,9 @@ export function activate(context: vscode.ExtensionContext) {
                 collapsibleState,
             );
             this.iconPath = vscode.ThemeIcon.File;
-            this.tooltip = new vscode.MarkdownString(`- path: *${file.fsPath}*\n`);
+            this.tooltip = new vscode.MarkdownString(``);
+            this.tooltip.appendMarkdown(`- name: ${file.filename}\n`);
+            this.tooltip.appendMarkdown(`- path: *${file.fsPath}*\n`);
             this.tooltip.appendMarkdown(`- size: ${file.humanReadableSize}`);
             this.description = `${file.humanReadableSize}`;
             this.contextValue = TreeItemContext.fileItem;
@@ -70,21 +72,28 @@ export function activate(context: vscode.ExtensionContext) {
         private files: FileInfo[] = [];
         private _onDidChangeTreeData: vscode.EventEmitter<void> = new vscode.EventEmitter();
         readonly onDidChangeTreeData: vscode.Event<void> = this._onDidChangeTreeData.event;
-        private stop?: (value: unknown) => void;
         private _asc: boolean = false;
-        private sortKey: 'filename' | 'size' = 'size';
+        private _sortKey: 'filename' | 'size' = 'size';
         constructor() {
             this.refresh();
             refreshEvent.event(this.refresh.bind(this));
             sortEvent.event(this.sort.bind(this));
-            vscode.commands.executeCommand('setContext', 'sizeTree.sort', this._asc);
+            vscode.commands.executeCommand('setContext', 'sizeTree.asc', this._asc);
+            vscode.commands.executeCommand('setContext', 'sizeTree.sortKey', this._sortKey);
         }
         get asc() {
             return this._asc;
         }
         set asc(value) {
-            vscode.commands.executeCommand('setContext', 'sizeTree.sort', value);
+            vscode.commands.executeCommand('setContext', 'sizeTree.asc', value);
             this._asc = value;
+        }
+        get sortKey() {
+            return this._sortKey;
+        }
+        set sortKey(value) {
+            vscode.commands.executeCommand('setContext', 'sizeTree.sortKey', value);
+            this._sortKey = value;
         }
         sort(sortType: SortType) {
             switch (sortType) {
@@ -137,12 +146,19 @@ export function activate(context: vscode.ExtensionContext) {
                 string,
                 boolean
             >;
-            let pattern = Object.keys({ ...exclude, ...watcherExclude }).join(',');
+            let excludePatternList: string[] = [];
+            for(const key in exclude) {
+                exclude[key] && excludePatternList.push(key);
+            }
+            for(const key in watcherExclude) {
+                watcherExclude[key] && excludePatternList.push(key);
+            }
+            let pattern = '**/{' + excludePatternList.map(i => i.replace('**/', '')).join(',') + '}';
             vscode.workspace.findFiles('', pattern).then(async (uris) => {
                 let list = await Promise.all(
                     uris.map(async (item) => {
                         try {
-                            let { size } = await fs.stat(item.fsPath, { throwIfNoEntry: false });
+                            let { size } = await fs.stat(item.fsPath);
                             let filename = path.basename(item.fsPath);
                             return { filename, size: size, fsPath: item.fsPath, humanReadableSize: convertBytes(size) };
                         } catch (err) {
@@ -185,12 +201,27 @@ export function activate(context: vscode.ExtensionContext) {
 
 
     const refresh = () => refreshEvent.fire();
-    const sortByName = () => sortEvent.fire('name');
-    const sortBySize = () => sortEvent.fire('size');
+    const sortByName = () => sortEvent.fire('size');
+    const sortBySize = () => sortEvent.fire('name');
     const toggleSort = () => sortEvent.fire('toggleSort');
-    const deleteSelected = (treeItem: TreeItem, selectedItems: TreeItem[]) => {
-        console.log(selectedItems, 'selectedItems');
+    const deleteSelected = async (treeItem: TreeItem, selectedItems: TreeItem[]) => {
+        if(!selectedItems.length) {
+            return;
+        }
+        let confirm = 'confirm';
+        let cancel = 'cancel';
+        let res = await vscode.window.showWarningMessage('Confirm Delete?', confirm, cancel);
+        if(res !== confirm) {
+            return;
+        }
+        Promise.allSettled(selectedItems.map(item => {
+            let fsPath = item.resourceUri!.fsPath;
+            fs.rm(fsPath);
+        })).then(() => {
+            fileCallback();
+        });
     };
+    const fileCallback = () => vscode.commands.executeCommand(Commands.refresh);
 
     context.subscriptions.push(vscode.window.registerFileDecorationProvider(new FileDecorationProvider()));
     context.subscriptions.push(
@@ -207,6 +238,11 @@ export function activate(context: vscode.ExtensionContext) {
             showCollapseAll: true,
             canSelectMany: true,
         }),
+    );
+    context.subscriptions.push(
+        vscode.workspace.onDidCreateFiles(fileCallback),
+        vscode.workspace.onDidDeleteFiles(fileCallback),
+        vscode.workspace.onDidRenameFiles(fileCallback),
     );
     context.subscriptions.push(refreshEvent, sortEvent);
 }
