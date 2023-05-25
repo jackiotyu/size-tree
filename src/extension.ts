@@ -88,6 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
             const totalSize = convertBytes(children.reduce((acc, item) => acc += item.size, 0));
             this.description = `${count} - ${totalSize}`;
             this.tooltip = new vscode.MarkdownString('');
+            this.tooltip.appendMarkdown(`- type: ${type}\n`);
             this.tooltip.appendMarkdown(`- total: ${count}\n`);
             this.tooltip.appendMarkdown(`- size: ${totalSize}\n`);
             this.children = children;
