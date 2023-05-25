@@ -281,7 +281,7 @@ export function activate(context: vscode.ExtensionContext) {
         Promise.allSettled(
             selectedItems.map((item) => {
                 let fsPath = item.resourceUri!.fsPath;
-                fs.rm(fsPath);
+                return fs.rm(fsPath);
             }),
         ).then(() => {
             fileCallback();
@@ -318,7 +318,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.workspace.onDidDeleteFiles(fileCallback),
         vscode.workspace.onDidRenameFiles(fileCallback),
     );
-    context.subscriptions.push(refreshEvent, sortEvent);
+    context.subscriptions.push(refreshEvent, sortEvent, groupEvent);
 }
 
 // This method is called when your extension is deactivated
