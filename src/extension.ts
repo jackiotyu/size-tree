@@ -29,6 +29,14 @@ interface FileInfo {
     fsPath: string;
 }
 
+type SimpleFileInfo = Pick<FileInfo, 'filename' | 'size'>;
+
+interface FileGroup {
+    filename: string;
+    size: number;
+    list: FileInfo[]
+}
+
 type SortType = 'name' | 'size' | 'toggleSort';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -79,13 +87,14 @@ export function activate(context: vscode.ExtensionContext) {
     class FileTypeItem extends vscode.TreeItem {
         readonly type = TreeItemType.fileGroup;
         children: FileInfo[];
-        constructor(type: string, children: FileInfo[], collapsibleState: vscode.TreeItemCollapsibleState) {
+        constructor(type: string, group: FileGroup, collapsibleState: vscode.TreeItemCollapsibleState) {
             const fileUri = vscode.Uri.file(`temp${type}`);
             super(fileUri, collapsibleState);
             this.iconPath = vscode.ThemeIcon.File;
             this.label = type;
+            let children = group.list;
             const count = children.length;
-            const totalSize = convertBytes(children.reduce((acc, item) => acc += item.size, 0));
+            const totalSize = convertBytes(group.size);
             this.description = `${count} - ${totalSize}`;
             this.tooltip = new vscode.MarkdownString('');
             this.tooltip.appendMarkdown(`- type: ${type}\n`);
@@ -154,7 +163,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         };
         get sortFunc() {
-            let sort: (a: FileInfo, b: FileInfo) => number = (a, b) => 0;
+            let sort: (a: SimpleFileInfo, b: SimpleFileInfo) => number = (a, b) => 0;
             switch (true) {
                 case this.asc && this.sortKey === 'filename':
                     sort = (a, b) => a.filename.localeCompare(b.filename);
@@ -221,18 +230,19 @@ export function activate(context: vscode.ExtensionContext) {
         getChildren(element?: AllTreeItem | undefined): vscode.ProviderResult<AllTreeItem[]> {
             if (!element) {
                 if (this.group) {
-                    let map = new Map<string, FileInfo[]>();
+                    let map = new Map<string, FileGroup>();
                     this.files.forEach((file) => {
                         let extname = path.extname(file.fsPath);
                         if (!map.has(extname)) {
-                            map.set(extname, []);
+                            map.set(extname, { size: file.size, list: [], filename: extname });
                         }
-                        map.get(extname)!.push(file);
+                        map.get(extname)!.size += file.size;
+                        map.get(extname)!.list.push(file);
                     });
                     return [...map.entries()]
-                        .sort((a, b) => a[0].localeCompare(b[0]))
-                        .map(([type, list]) => {
-                            return new FileTypeItem(type, list, vscode.TreeItemCollapsibleState.Collapsed);
+                        .sort((a, b) => this.sortFunc(a[1], b[1]))
+                        .map(([type, group]) => {
+                            return new FileTypeItem(type, group, vscode.TreeItemCollapsibleState.Collapsed);
                         });
                 }
 
