@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import fs from 'fs/promises';
 import path from 'path';
+import { resolvePatterns, IExpression } from './utils';
 
 enum Commands {
     refresh = 'size-tree.refresh',
@@ -11,6 +12,7 @@ enum Commands {
     deleteSelected = 'size-tree.deleteSelected',
     groupByType = 'size-tree.groupByType',
     ungroupByType = 'size-tree.ungroupByType',
+    revealInSizeTree = 'size-tree.revealInSizeTree',
 }
 
 enum TreeItemContext {
@@ -34,7 +36,7 @@ type SimpleFileInfo = Pick<FileInfo, 'filename' | 'size'>;
 interface FileGroup {
     filename: string;
     size: number;
-    list: FileInfo[]
+    list: FileInfo[];
 }
 
 type SortType = 'name' | 'size' | 'toggleSort';
@@ -44,6 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
     const refreshEvent = new vscode.EventEmitter<void>();
     const sortEvent = new vscode.EventEmitter<SortType>();
     const groupEvent = new vscode.EventEmitter<boolean>();
+    const sizeTreeVisibleEvent = new vscode.EventEmitter<boolean>();
     const badgeTag = 'SizeTreeBadge';
 
     const convertBytes = function (bytes: number) {
@@ -113,6 +116,7 @@ export function activate(context: vscode.ExtensionContext) {
         private _asc: boolean = false;
         private _sortKey: 'filename' | 'size' = 'size';
         private _group: boolean = true;
+        private stopSearchToken: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
         constructor() {
             this.refresh();
             refreshEvent.event(this.refresh);
@@ -121,6 +125,15 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand('setContext', 'sizeTree.asc', this._asc);
             vscode.commands.executeCommand('setContext', 'sizeTree.sortKey', this._sortKey);
             vscode.commands.executeCommand('setContext', 'sizeTree.group', this._group);
+        }
+        search(fsPath: string) {
+            return this.files.find((file) => file.fsPath === fsPath);
+        }
+        get totalSize() {
+            return this.files.reduce((total, file) => ((total += file.size || 0), total), 0);
+        }
+        get count() {
+            return this.files.length;
         }
         get asc() {
             return this._asc;
@@ -193,20 +206,15 @@ export function activate(context: vscode.ExtensionContext) {
             this._onDidChangeTreeData.fire();
         }
         refresh = () => {
-            let exclude = vscode.workspace.getConfiguration('files').get('exclude') as Record<string, boolean>;
-            let watcherExclude = vscode.workspace.getConfiguration('files').get('watcherExclude') as Record<
-                string,
-                boolean
-            >;
-            let excludePatternList: string[] = [];
-            for (const key in exclude) {
-                exclude[key] && excludePatternList.push(key);
-            }
-            for (const key in watcherExclude) {
-                watcherExclude[key] && excludePatternList.push(key);
-            }
+            let excludePatternList: string[] = resolvePatterns(
+                vscode.workspace.getConfiguration('files').get<IExpression>('exclude'),
+                vscode.workspace.getConfiguration('search').get<IExpression>('exclude'),
+            );
             let pattern = '**/{' + excludePatternList.map((i) => i.replace('**/', '')).join(',') + '}';
-            vscode.workspace.findFiles('', pattern).then(async (uris) => {
+            const MAX_RESULT = 3000000;
+            this.stopSearchToken.cancel();
+            this.stopSearchToken = new vscode.CancellationTokenSource();
+            vscode.workspace.findFiles('', pattern, MAX_RESULT, this.stopSearchToken.token).then(async (uris) => {
                 let list = await Promise.all(
                     uris.map(async (item) => {
                         try {
@@ -224,6 +232,9 @@ export function activate(context: vscode.ExtensionContext) {
                 this._onDidChangeTreeData.fire();
             });
         };
+        stop() {
+            this.stopSearchToken.cancel();
+        }
         getTreeItem(element: AllTreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
             return Promise.resolve(element);
         }
@@ -234,7 +245,7 @@ export function activate(context: vscode.ExtensionContext) {
                     this.files.forEach((file) => {
                         let extname = path.extname(file.fsPath);
                         if (!map.has(extname)) {
-                            map.set(extname, { size: file.size, list: [], filename: extname });
+                            map.set(extname, { size: 0, list: [], filename: extname });
                         }
                         map.get(extname)!.size += file.size;
                         map.get(extname)!.list.push(file);
@@ -274,6 +285,29 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }
     }
+
+    const sizeTreeDateProvider = new SizeTreeDataProvider();
+
+    const sizeTreeView = vscode.window.createTreeView(viewId, {
+        treeDataProvider: sizeTreeDateProvider,
+        showCollapseAll: true,
+        canSelectMany: true,
+    });
+
+    sizeTreeView.onDidChangeVisibility((event) => {
+        !event.visible && sizeTreeDateProvider.stop();
+    });
+
+    sizeTreeDateProvider.onDidChangeTreeData(() => {
+        const totalSize = convertBytes(sizeTreeDateProvider.totalSize);
+        const count = sizeTreeDateProvider.count;
+        sizeTreeView.message = `📄 size ${totalSize} | ♾️ count ${count}`;
+    });
+
+    // TODO 搜索排除、指定文件夹
+    sizeTreeView.description = `find in: ${vscode.workspace.workspaceFolders
+        ?.map((folder) => folder.uri.path)
+        .join('\n')}`;
 
     const refresh = () => refreshEvent.fire();
     const sortByName = () => sortEvent.fire('size');
@@ -317,19 +351,13 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(Commands.groupByType, ungroupByType),
         vscode.commands.registerCommand(Commands.ungroupByType, groupByType),
     );
-    context.subscriptions.push(
-        vscode.window.createTreeView(viewId, {
-            treeDataProvider: new SizeTreeDataProvider(),
-            showCollapseAll: true,
-            canSelectMany: true,
-        }),
-    );
+    context.subscriptions.push(sizeTreeView);
     context.subscriptions.push(
         vscode.workspace.onDidCreateFiles(fileCallback),
         vscode.workspace.onDidDeleteFiles(fileCallback),
         vscode.workspace.onDidRenameFiles(fileCallback),
     );
-    context.subscriptions.push(refreshEvent, sortEvent, groupEvent);
+    context.subscriptions.push(refreshEvent, sortEvent, groupEvent, sizeTreeVisibleEvent);
 }
 
 // This method is called when your extension is deactivated

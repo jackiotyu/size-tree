@@ -3,7 +3,7 @@
   "name": "size-tree",
   "displayName": "Size Tree",
   "description": "Quick show file size and delete files by one click.",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.78.0"
   },
@@ -28,42 +28,42 @@
     "commands": [
       {
         "command": "size-tree.refresh",
-        "title": "refresh size tree",
+        "title": "Refresh size tree",
         "icon": "$(refresh)"
       },
       {
         "command": "size-tree.sortByName",
-        "title": "sort by name",
+        "title": "Sort by name",
         "icon": "$(case-sensitive)"
       },
       {
         "command": "size-tree.sortBySize",
-        "title": "sort by size",
+        "title": "Sort by size",
         "icon": "$(file)"
       },
       {
         "command": "size-tree.descend",
-        "title": "descend",
+        "title": "Descend",
         "icon": "$(arrow-down)"
       },
       {
         "command": "size-tree.ascend",
-        "title": "ascend",
+        "title": "Ascend",
         "icon": "$(arrow-up)"
       },
       {
         "command": "size-tree.groupByType",
-        "title": "group by file type",
+        "title": "Group by file type",
         "icon": "$(group-by-ref-type)"
       },
       {
         "command": "size-tree.ungroupByType",
-        "title": "ungroup by file type",
+        "title": "Ungroup by file type",
         "icon": "$(ungroup-by-ref-type)"
       },
       {
         "command": "size-tree.deleteSelected",
-        "title": "delete selected files/dirs"
+        "title": "Delete selected files/dirs"
       }
     ],
     "views": {
