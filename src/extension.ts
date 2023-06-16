@@ -13,6 +13,7 @@ enum Commands {
     groupByType = 'size-tree.groupByType',
     ungroupByType = 'size-tree.ungroupByType',
     revealInSizeTree = 'size-tree.revealInSizeTree',
+    openSetting = 'size-tree.openSetting'
 }
 
 enum TreeItemContext {
@@ -48,7 +49,6 @@ export function activate(context: vscode.ExtensionContext) {
     const groupEvent = new vscode.EventEmitter<boolean>();
     const sizeTreeVisibleEvent = new vscode.EventEmitter<boolean>();
     const badgeTag = 'SizeTreeBadge';
-
     const convertBytes = function (bytes: number) {
         const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
         if (bytes === 0) {
@@ -339,6 +339,9 @@ export function activate(context: vscode.ExtensionContext) {
     const ungroupByType = () => {
         groupEvent.fire(false);
     };
+    const openSetting = () => {
+        void vscode.commands.executeCommand('workbench.action.openSettings', `@ext:jackiotyu.size-tree`);
+    };
 
     context.subscriptions.push(vscode.window.registerFileDecorationProvider(new FileDecorationProvider()));
     context.subscriptions.push(
@@ -350,6 +353,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(Commands.deleteSelected, deleteSelected),
         vscode.commands.registerCommand(Commands.groupByType, ungroupByType),
         vscode.commands.registerCommand(Commands.ungroupByType, groupByType),
+        vscode.commands.registerCommand(Commands.openSetting, openSetting),
     );
     context.subscriptions.push(sizeTreeView);
     context.subscriptions.push(

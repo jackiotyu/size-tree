@@ -64,6 +64,11 @@
       {
         "command": "size-tree.deleteSelected",
         "title": "Delete selected files/dirs"
+      },
+      {
+        "command": "size-tree.openSetting",
+        "title": "Open size-tree setting",
+        "icon": "$(settings-gear)"
       }
     ],
     "views": {
@@ -75,7 +80,46 @@
       ]
     },
     "menus": {
+      "commandPalette": [
+        {
+          "command": "size-tree.refresh",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.sortByName",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.sortBySize",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.descend",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.ascend",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.groupByType",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.ungroupByType",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.deleteSelected",
+          "when": "false"
+        }
+      ],
       "view/title": [
+        {
+          "command": "size-tree.openSetting",
+          "when": "view == sizeTree",
+          "group": "navigation@100"
+        },
         {
           "command": "size-tree.refresh",
           "when": "view == sizeTree",
@@ -118,6 +162,27 @@
           "when": "view == sizeTree && viewItem == sizeTree.fileItem"
         }
       ]
+    },
+    "configuration": {
+      "title": "configuration of size-tree",
+      "properties": {
+        "sizeTree.ignoreFolders": {
+          "type": "array",
+          "description": "https://code.visualstudio.com/api/references/vscode-api#GlobPattern",
+          "scope": "resource",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sizeTree.includeFolders": {
+          "type": "array",
+          "description": "https://code.visualstudio.com/api/references/vscode-api#GlobPattern",
+          "scope": "resource",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "scripts": {
