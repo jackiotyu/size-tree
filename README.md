@@ -8,4 +8,5 @@ Quick show file size and delete files by one click.
 - sort by file size
 - group/ungroup by file type
 
-![preview](images/preview.png)
+#### preview
+![preview](images/preview.gif)

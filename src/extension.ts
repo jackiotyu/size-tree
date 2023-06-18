@@ -10,10 +10,13 @@ enum Commands {
     descend = 'size-tree.descend',
     ascend = 'size-tree.ascend',
     deleteSelected = 'size-tree.deleteSelected',
+    revealInExplorer = 'size-tree.revealInExplorer',
     groupByType = 'size-tree.groupByType',
     ungroupByType = 'size-tree.ungroupByType',
     revealInSizeTree = 'size-tree.revealInSizeTree',
-    openSetting = 'size-tree.openSetting'
+    openSetting = 'size-tree.openSetting',
+    searchInFolder = 'size-tree.searchInFolder',
+    clearSearchFolder = 'size-tree.clearSearchFolder',
 }
 
 enum TreeItemContext {
@@ -23,6 +26,10 @@ enum TreeItemContext {
 enum TreeItemType {
     fileGroup = 'fileGroup',
     file = 'file',
+}
+
+enum Configuration {
+    useExcludeDefault = 'useExcludeDefault'
 }
 
 interface FileInfo {
@@ -116,18 +123,37 @@ export function activate(context: vscode.ExtensionContext) {
         private _asc: boolean = false;
         private _sortKey: 'filename' | 'size' = 'size';
         private _group: boolean = true;
+        private _searchFolder?: vscode.Uri;
         private stopSearchToken: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
+        private _useExclude: boolean = true;
         constructor() {
             this.refresh();
             refreshEvent.event(this.refresh);
             sortEvent.event(this.sort);
             groupEvent.event(this.handleGroup);
+            this.updateExcludeSetting();
+            vscode.workspace.onDidChangeConfiguration(event => {
+                if(!event.affectsConfiguration(viewId)) {return;}
+                this.updateExcludeSetting();
+            });
             vscode.commands.executeCommand('setContext', 'sizeTree.asc', this._asc);
             vscode.commands.executeCommand('setContext', 'sizeTree.sortKey', this._sortKey);
             vscode.commands.executeCommand('setContext', 'sizeTree.group', this._group);
+            vscode.commands.executeCommand('setContext', 'sizeTree.searchFolder', false);
+        }
+        updateExcludeSetting() {
+            this.useExclude = !!vscode.workspace.getConfiguration(viewId).get<boolean>(Configuration.useExcludeDefault);
         }
         search(fsPath: string) {
             return this.files.find((file) => file.fsPath === fsPath);
+        }
+        get useExclude() {
+            return this._useExclude;
+        }
+        set useExclude(value: boolean) {
+            if(!!value === this._useExclude) {return;}
+            this._useExclude = !!value;
+            this.refresh();
         }
         get totalSize() {
             return this.files.reduce((total, file) => ((total += file.size || 0), total), 0);
@@ -155,6 +181,15 @@ export function activate(context: vscode.ExtensionContext) {
         set group(value) {
             vscode.commands.executeCommand('setContext', 'sizeTree.group', value);
             this._group = value;
+        }
+        get searchFolder(): vscode.Uri | undefined {
+            return this._searchFolder;
+        }
+        set searchFolder(folder: vscode.Uri | undefined) {
+            if(folder?.fsPath === this._searchFolder?.fsPath) {return;}
+            vscode.commands.executeCommand('setContext', 'sizeTree.searchFolder', !!folder);
+            this._searchFolder = folder;
+            this.refresh();
         }
         handleGroup = (group: boolean) => {
             this.group = group;
@@ -206,15 +241,24 @@ export function activate(context: vscode.ExtensionContext) {
             this._onDidChangeTreeData.fire();
         }
         refresh = () => {
-            let excludePatternList: string[] = resolvePatterns(
-                vscode.workspace.getConfiguration('files').get<IExpression>('exclude'),
-                vscode.workspace.getConfiguration('search').get<IExpression>('exclude'),
-            );
-            let pattern = '**/{' + excludePatternList.map((i) => i.replace('**/', '')).join(',') + '}';
             const MAX_RESULT = 3000000;
             this.stopSearchToken.cancel();
             this.stopSearchToken = new vscode.CancellationTokenSource();
-            vscode.workspace.findFiles('', pattern, MAX_RESULT, this.stopSearchToken.token).then(async (uris) => {
+
+            let pattern = '';
+            if(this.useExclude) {
+                let excludePatternList: string[] = resolvePatterns(
+                    vscode.workspace.getConfiguration('files').get<IExpression>('exclude'),
+                    vscode.workspace.getConfiguration('search').get<IExpression>('exclude'),
+                );
+                pattern = '**/{' + excludePatternList.map((i) => i.replace('**/', '')).join(',') + '}';
+            }
+
+            const includes = this.searchFolder
+                ? new vscode.RelativePattern(this.searchFolder, '**/*')
+                : '';
+
+            vscode.workspace.findFiles(includes, pattern, MAX_RESULT, this.stopSearchToken.token).then(async (uris) => {
                 let list = await Promise.all(
                     uris.map(async (item) => {
                         try {
@@ -301,20 +345,23 @@ export function activate(context: vscode.ExtensionContext) {
     sizeTreeDateProvider.onDidChangeTreeData(() => {
         const totalSize = convertBytes(sizeTreeDateProvider.totalSize);
         const count = sizeTreeDateProvider.count;
-        sizeTreeView.message = `📄 size ${totalSize} | ♾️ count ${count}`;
+        sizeTreeView.message = `📦 size ${totalSize} | count ${count}`;
+        // TODO 搜索排除文件夹
+        sizeTreeView.description = sizeTreeDateProvider.searchFolder
+        ? `find in: ${sizeTreeDateProvider.searchFolder.fsPath}`
+        : `find in: ${vscode.workspace.workspaceFolders
+            ?.map((folder) => folder.uri.path)
+            .join('\n')}`;
     });
 
-    // TODO 搜索排除、指定文件夹
-    sizeTreeView.description = `find in: ${vscode.workspace.workspaceFolders
-        ?.map((folder) => folder.uri.path)
-        .join('\n')}`;
 
     const refresh = () => refreshEvent.fire();
     const sortByName = () => sortEvent.fire('size');
     const sortBySize = () => sortEvent.fire('name');
     const toggleSort = () => sortEvent.fire('toggleSort');
     const deleteSelected = async (treeItem: TreeItem, selectedItems: TreeItem[]) => {
-        if (!selectedItems.length) {
+        let items = !selectedItems?.length ? [treeItem] : selectedItems;
+        if (!items?.length) {
             return;
         }
         let confirm = 'confirm';
@@ -324,13 +371,18 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         Promise.allSettled(
-            selectedItems.map((item) => {
+            items.map((item) => {
                 let fsPath = item.resourceUri!.fsPath;
                 return fs.rm(fsPath);
             }),
         ).then(() => {
             fileCallback();
         });
+    };
+    const revealInExplorer = (item: TreeItem) => {
+        let fsPath = item.resourceUri?.fsPath;
+        if(!fsPath) {return vscode.window.showErrorMessage('File path is invalid');}
+        void vscode.commands.executeCommand('revealInExplorer', vscode.Uri.parse(fsPath));
     };
     const fileCallback = () => vscode.commands.executeCommand(Commands.refresh);
     const groupByType = () => {
@@ -342,6 +394,17 @@ export function activate(context: vscode.ExtensionContext) {
     const openSetting = () => {
         void vscode.commands.executeCommand('workbench.action.openSettings', `@ext:jackiotyu.size-tree`);
     };
+    const searchInFolder = async (item: vscode.Uri) => {
+        let fsPath = item?.fsPath;
+        if(!fsPath) {
+            return vscode.window.showErrorMessage('Current folder invalid, Please select folder in explorer.');
+        }
+        sizeTreeDateProvider.searchFolder = item;
+        vscode.commands.executeCommand(`${viewId}.focus`);
+    };
+    const clearSearchFolder = () => {
+        sizeTreeDateProvider.searchFolder = void 0;
+    };
 
     context.subscriptions.push(vscode.window.registerFileDecorationProvider(new FileDecorationProvider()));
     context.subscriptions.push(
@@ -351,9 +414,12 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(Commands.descend, toggleSort),
         vscode.commands.registerCommand(Commands.ascend, toggleSort),
         vscode.commands.registerCommand(Commands.deleteSelected, deleteSelected),
+        vscode.commands.registerCommand(Commands.revealInExplorer, revealInExplorer),
         vscode.commands.registerCommand(Commands.groupByType, ungroupByType),
         vscode.commands.registerCommand(Commands.ungroupByType, groupByType),
         vscode.commands.registerCommand(Commands.openSetting, openSetting),
+        vscode.commands.registerCommand(Commands.searchInFolder, searchInFolder),
+        vscode.commands.registerCommand(Commands.clearSearchFolder, clearSearchFolder)
     );
     context.subscriptions.push(sizeTreeView);
     context.subscriptions.push(

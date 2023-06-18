@@ -3,7 +3,7 @@
   "name": "size-tree",
   "displayName": "Size Tree",
   "description": "Quick show file size and delete files by one click.",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "engines": {
     "vscode": "^1.78.0"
   },
@@ -66,9 +66,23 @@
         "title": "Delete selected files/dirs"
       },
       {
+        "command": "size-tree.revealInExplorer",
+        "title": "Reveal in explorer"
+      },
+      {
         "command": "size-tree.openSetting",
         "title": "Open size-tree setting",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "size-tree.searchInFolder",
+        "title": "📦 List folder's files in size-tree",
+        "icon": "$(circle-large)"
+      },
+      {
+        "command": "size-tree.clearSearchFolder",
+        "title": "Clear Current Search Folder",
+        "icon": "$(circle-slash)"
       }
     ],
     "views": {
@@ -112,6 +126,18 @@
         {
           "command": "size-tree.deleteSelected",
           "when": "false"
+        },
+        {
+          "command": "size-tree.revealInExplorer",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.searchInFolder",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.clearSearchFolder",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -119,6 +145,11 @@
           "command": "size-tree.openSetting",
           "when": "view == sizeTree",
           "group": "navigation@100"
+        },
+        {
+          "command": "size-tree.clearSearchFolder",
+          "when": "view == sizeTree && sizeTree.searchFolder",
+          "group": "navigation@99"
         },
         {
           "command": "size-tree.refresh",
@@ -160,27 +191,28 @@
         {
           "command": "size-tree.deleteSelected",
           "when": "view == sizeTree && viewItem == sizeTree.fileItem"
+        },
+        {
+          "command": "size-tree.revealInExplorer",
+          "when": "view == sizeTree && viewItem == sizeTree.fileItem"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "size-tree.searchInFolder",
+          "group": "4_search@99",
+          "when": "explorerResourceIsFolder"
         }
       ]
     },
     "configuration": {
       "title": "configuration of size-tree",
       "properties": {
-        "sizeTree.ignoreFolders": {
-          "type": "array",
-          "description": "https://code.visualstudio.com/api/references/vscode-api#GlobPattern",
+        "sizeTree.useExcludeDefault": {
+          "type": "boolean",
+          "description": "default exclude from `files.exclude` & `search.exclude`",
           "scope": "resource",
-          "items": {
-            "type": "string"
-          }
-        },
-        "sizeTree.includeFolders": {
-          "type": "array",
-          "description": "https://code.visualstudio.com/api/references/vscode-api#GlobPattern",
-          "scope": "resource",
-          "items": {
-            "type": "string"
-          }
+          "default": true
         }
       }
     }
