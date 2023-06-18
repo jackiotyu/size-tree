@@ -132,10 +132,6 @@ export function activate(context: vscode.ExtensionContext) {
             sortEvent.event(this.sort);
             groupEvent.event(this.handleGroup);
             this.updateExcludeSetting();
-            vscode.workspace.onDidChangeConfiguration(event => {
-                if(!event.affectsConfiguration(viewId)) {return;}
-                this.updateExcludeSetting();
-            });
             vscode.commands.executeCommand('setContext', 'sizeTree.asc', this._asc);
             vscode.commands.executeCommand('setContext', 'sizeTree.sortKey', this._sortKey);
             vscode.commands.executeCommand('setContext', 'sizeTree.group', this._group);
@@ -426,6 +422,10 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.workspace.onDidCreateFiles(fileCallback),
         vscode.workspace.onDidDeleteFiles(fileCallback),
         vscode.workspace.onDidRenameFiles(fileCallback),
+        vscode.workspace.onDidChangeConfiguration(event => {
+            if(!event.affectsConfiguration(viewId)) {return;}
+            sizeTreeDateProvider.updateExcludeSetting();
+        })
     );
     context.subscriptions.push(refreshEvent, sortEvent, groupEvent, sizeTreeVisibleEvent);
 }
