@@ -378,7 +378,7 @@ export function activate(context: vscode.ExtensionContext) {
     const revealInExplorer = (item: TreeItem) => {
         let fsPath = item.resourceUri?.fsPath;
         if(!fsPath) {return vscode.window.showErrorMessage('File path is invalid');}
-        void vscode.commands.executeCommand('revealInExplorer', vscode.Uri.parse(fsPath));
+        void vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(fsPath));
     };
     const fileCallback = () => vscode.commands.executeCommand(Commands.refresh);
     const groupByType = () => {
