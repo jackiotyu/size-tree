@@ -17,10 +17,12 @@ enum Commands {
     openSetting = 'size-tree.openSetting',
     searchInFolder = 'size-tree.searchInFolder',
     clearSearchFolder = 'size-tree.clearSearchFolder',
+    deleteGroupFiles = 'size-tree.deleteGroupFiles',
 }
 
 enum TreeItemContext {
     fileItem = 'sizeTree.fileItem',
+    fileGroup = 'sizeTree.fileGroup',
 }
 
 enum TreeItemType {
@@ -111,6 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
             this.tooltip.appendMarkdown(`- total: ${count}\n`);
             this.tooltip.appendMarkdown(`- size: ${totalSize}\n`);
             this.children = children;
+            this.contextValue = TreeItemContext.fileGroup;
         }
     }
 
@@ -362,7 +365,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
         let confirm = 'confirm';
         let cancel = 'cancel';
-        let res = await vscode.window.showWarningMessage('Confirm Delete?', confirm, cancel);
+        let res = await vscode.window.showWarningMessage(`Confirm Delete? selected ${items!.length} items`, confirm, cancel);
         if (res !== confirm) {
             return;
         }
@@ -371,6 +374,18 @@ export function activate(context: vscode.ExtensionContext) {
                 let fsPath = item.resourceUri!.fsPath;
                 return fs.rm(fsPath);
             }),
+        ).then(() => {
+            fileCallback();
+        });
+    };
+    const deleteGroupFiles = async (treeItem: FileTypeItem) => {
+        let confirm = 'confirm';
+        let cancel = 'cancel';
+        let res = await vscode.window.showWarningMessage(`Confirm Delete? selected all ${treeItem.label} files`, confirm, cancel);
+        if (res !== confirm) {return;}
+        let items = treeItem.children.map(i => i.fsPath);
+        Promise.allSettled(
+            items.map((fsPath) => fs.rm(fsPath)),
         ).then(() => {
             fileCallback();
         });
@@ -415,7 +430,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(Commands.ungroupByType, groupByType),
         vscode.commands.registerCommand(Commands.openSetting, openSetting),
         vscode.commands.registerCommand(Commands.searchInFolder, searchInFolder),
-        vscode.commands.registerCommand(Commands.clearSearchFolder, clearSearchFolder)
+        vscode.commands.registerCommand(Commands.clearSearchFolder, clearSearchFolder),
+        vscode.commands.registerCommand(Commands.deleteGroupFiles, deleteGroupFiles)
     );
     context.subscriptions.push(sizeTreeView);
     context.subscriptions.push(

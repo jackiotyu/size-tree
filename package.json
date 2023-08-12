@@ -66,6 +66,10 @@
         "title": "Delete selected files/dirs"
       },
       {
+        "command": "size-tree.deleteGroupFiles",
+        "title": "Delete files in current group"
+      },
+      {
         "command": "size-tree.revealInExplorer",
         "title": "Reveal in explorer"
       },
@@ -138,6 +142,10 @@
         {
           "command": "size-tree.clearSearchFolder",
           "when": "false"
+        },
+        {
+          "command": "size-tree.deleteGroupFiles",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -195,6 +203,10 @@
         {
           "command": "size-tree.revealInExplorer",
           "when": "view == sizeTree && viewItem == sizeTree.fileItem"
+        },
+        {
+          "command": "size-tree.deleteGroupFiles",
+          "when": "view == sizeTree && viewItem == sizeTree.fileGroup"
         }
       ],
       "explorer/context": [
