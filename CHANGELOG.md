@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.0.7] - 2023-08-12
+
+### Added
+
+- add `Delete files in current group` command to file group treeItem
+- fixed `reveal in explorer` command
+
 ## [0.0.6] - 2023-06-18
 
 ### Added
