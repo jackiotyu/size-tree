@@ -381,7 +381,7 @@ export function activate(context: vscode.ExtensionContext) {
     const deleteGroupFiles = async (treeItem: FileTypeItem) => {
         let confirm = 'confirm';
         let cancel = 'cancel';
-        let res = await vscode.window.showWarningMessage(`Confirm Delete? selected all ${treeItem.label} files`, confirm, cancel);
+        let res = await vscode.window.showWarningMessage(`Confirm Delete? selected all ${treeItem.label || 'empty extname'} files`, confirm, cancel);
         if (res !== confirm) {return;}
         let items = treeItem.children.map(i => i.fsPath);
         Promise.allSettled(
