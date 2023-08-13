@@ -258,21 +258,24 @@ export function activate(context: vscode.ExtensionContext) {
                 : '';
 
             vscode.workspace.findFiles(includes, pattern, MAX_RESULT, this.stopSearchToken.token).then(async (uris) => {
-                let list = await Promise.all(
-                    uris.map(async (item) => {
-                        try {
-                            let { size } = await fs.stat(item.fsPath);
-                            let filename = path.basename(item.fsPath);
-                            return { filename, size: size, fsPath: item.fsPath, humanReadableSize: convertBytes(size) };
-                        } catch (err) {
-                            console.log(err, 'err');
-                            return null;
-                        }
-                    }),
-                );
-                this.files = list.filter((i) => i !== null) as unknown as FileInfo[];
-                this.files = this.files.sort(this.sortFunc);
-                this._onDidChangeTreeData.fire();
+                 try{
+                     let list = await Promise.all(
+                         uris.map(async (item) => {
+                            if(this.stopSearchToken.token.isCancellationRequested) { throw Error('cancel'); };
+                             try {
+                                 let { size } = await fs.stat(item.fsPath);
+                                 let filename = path.basename(item.fsPath);
+                                 return { filename, size: size, fsPath: item.fsPath, humanReadableSize: convertBytes(size) };
+                             } catch (err) {
+                                 console.log(err, 'err');
+                                 return null;
+                             }
+                         }),
+                     );
+                     this.files = list.filter((i) => i !== null) as unknown as FileInfo[];
+                     this.files = this.files.sort(this.sortFunc);
+                     this._onDidChangeTreeData.fire();
+                 } catch {}
             });
         };
         stop() {
