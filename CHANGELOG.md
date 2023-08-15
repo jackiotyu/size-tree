@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.0.8] - 2023-08-15
+
+### Fixed
+
+- Improve performance by using worker thread when process a large file list.
+- Remove gif file while package. Total size is just 20KB now.
+
 ## [0.0.7] - 2023-08-12
 
 ### Added
