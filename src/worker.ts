@@ -1,7 +1,7 @@
-import { parentPort, threadId } from 'worker_threads';
+import { parentPort } from 'worker_threads';
 import path from 'path';
 import fs from 'fs/promises';
-import { CancellationTokenSource } from 'util-kit';
+import CancellationTokenSource from './cancel-token';
 import { convertBytes } from './utils';
 
 let cancelToken = new CancellationTokenSource();
@@ -41,7 +41,6 @@ parentPort?.on('message', (data: string[] | string) => {
                 cancelToken.cancel();
                 cancelToken.dispose();
             } catch {}
-            cancelToken = new CancellationTokenSource();
         }
         return;
     }

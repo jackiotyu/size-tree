@@ -68,6 +68,7 @@ export class WorkerPool {
             this.doAfterTaskIsFinished(worker, workerId);
         };
         const errorCallback = (error: any) => {
+            console.log('errorCallback', error);
             taskObj.cb(error);
             this.doAfterTaskIsFinished(worker, workerId);
         };
