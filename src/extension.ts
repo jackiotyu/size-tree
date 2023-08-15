@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import fs from 'fs/promises';
 import path from 'path';
-import { resolvePatterns, IExpression } from './utils';
+import os from 'os';
+import { resolvePatterns, IExpression, chunkList, convertBytes } from './utils';
+import { WorkerPool } from './worker-pool';
 
 enum Commands {
     refresh = 'size-tree.refresh',
@@ -31,7 +33,7 @@ enum TreeItemType {
 }
 
 enum Configuration {
-    useExcludeDefault = 'useExcludeDefault'
+    useExcludeDefault = 'useExcludeDefault',
 }
 
 interface FileInfo {
@@ -51,24 +53,18 @@ interface FileGroup {
 
 type SortType = 'name' | 'size' | 'toggleSort';
 
+const cpusLength = Math.min(os.cpus().length, 6);
+let workerPool: WorkerPool;
+
 export function activate(context: vscode.ExtensionContext) {
+    workerPool = new WorkerPool(path.resolve(__dirname, './worker.js'), cpusLength);
+
     const viewId = 'sizeTree';
     const refreshEvent = new vscode.EventEmitter<void>();
     const sortEvent = new vscode.EventEmitter<SortType>();
     const groupEvent = new vscode.EventEmitter<boolean>();
     const sizeTreeVisibleEvent = new vscode.EventEmitter<boolean>();
     const badgeTag = 'SizeTreeBadge';
-    const convertBytes = function (bytes: number) {
-        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-        if (bytes === 0) {
-            return 'n/a';
-        }
-        const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)) + '', 10);
-        if (i === 0) {
-            return bytes + ' ' + sizes[i];
-        }
-        return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
-    };
 
     class TreeItem extends vscode.TreeItem {
         readonly type = TreeItemType.file;
@@ -150,7 +146,9 @@ export function activate(context: vscode.ExtensionContext) {
             return this._useExclude;
         }
         set useExclude(value: boolean) {
-            if(!!value === this._useExclude) {return;}
+            if (!!value === this._useExclude) {
+                return;
+            }
             this._useExclude = !!value;
             this.refresh();
         }
@@ -185,7 +183,9 @@ export function activate(context: vscode.ExtensionContext) {
             return this._searchFolder;
         }
         set searchFolder(folder: vscode.Uri | undefined) {
-            if(folder?.fsPath === this._searchFolder?.fsPath) {return;}
+            if (folder?.fsPath === this._searchFolder?.fsPath) {
+                return;
+            }
             vscode.commands.executeCommand('setContext', 'sizeTree.searchFolder', !!folder);
             this._searchFolder = folder;
             this.refresh();
@@ -242,10 +242,11 @@ export function activate(context: vscode.ExtensionContext) {
         refresh = () => {
             const MAX_RESULT = 3000000;
             this.stopSearchToken.cancel();
+            this.stopSearchToken.dispose();
             this.stopSearchToken = new vscode.CancellationTokenSource();
 
             let pattern = '';
-            if(this.useExclude) {
+            if (this.useExclude) {
                 let excludePatternList: string[] = resolvePatterns(
                     vscode.workspace.getConfiguration('files').get<IExpression>('exclude'),
                     vscode.workspace.getConfiguration('search').get<IExpression>('exclude'),
@@ -253,29 +254,32 @@ export function activate(context: vscode.ExtensionContext) {
                 pattern = '**/{' + excludePatternList.map((i) => i.replace('**/', '')).join(',') + '}';
             }
 
-            const includes = this.searchFolder
-                ? new vscode.RelativePattern(this.searchFolder, '**/*')
-                : '';
-
+            const includes = this.searchFolder ? new vscode.RelativePattern(this.searchFolder, '**/*') : '';
             vscode.workspace.findFiles(includes, pattern, MAX_RESULT, this.stopSearchToken.token).then(async (uris) => {
-                 try{
-                     let list = await Promise.all(
-                         uris.map(async (item) => {
-                            if(this.stopSearchToken.token.isCancellationRequested) { throw Error('cancel'); };
-                             try {
-                                 let { size } = await fs.stat(item.fsPath);
-                                 let filename = path.basename(item.fsPath);
-                                 return { filename, size: size, fsPath: item.fsPath, humanReadableSize: convertBytes(size) };
-                             } catch (err) {
-                                 console.log(err, 'err');
-                                 return null;
-                             }
-                         }),
-                     );
-                     this.files = list.filter((i) => i !== null) as unknown as FileInfo[];
-                     this.files = this.files.sort(this.sortFunc);
-                     this._onDidChangeTreeData.fire();
-                 } catch {}
+                try {
+                    // let timeStamp = +new Date();
+                    // const name = 'workerRun' + timeStamp;
+                    // console.time(name);
+                    let fsPathList = uris.map((i) => i.fsPath);
+                    let cpuNum = cpusLength;
+                    let chunkNum = Math.min(Math.floor(fsPathList.length / cpuNum), 400) || 1;
+                    let splitFsPathList = chunkList(fsPathList, chunkNum);
+                    this.stopSearchToken.token.onCancellationRequested(() => {
+                        workerPool.stop();
+                        throw Error('isStop');
+                    });
+                    let fileInfoList = await Promise.all(
+                        splitFsPathList.map((fsPathList) => {
+                            return workerPool.run<string[], FileInfo>(fsPathList);
+                        }),
+                    );
+                    this.files = fileInfoList.flat(1);
+                    // console.timeEnd(name);
+                    this.files = this.files.sort(this.sortFunc);
+                    this._onDidChangeTreeData.fire();
+                } catch (err) {
+                    console.log('err', err);
+                }
             });
         };
         stop() {
@@ -350,12 +354,9 @@ export function activate(context: vscode.ExtensionContext) {
         sizeTreeView.message = `📦 size ${totalSize} | count ${count}`;
         // TODO 搜索排除文件夹
         sizeTreeView.description = sizeTreeDateProvider.searchFolder
-        ? `find in: ${sizeTreeDateProvider.searchFolder.fsPath}`
-        : `find in: ${vscode.workspace.workspaceFolders
-            ?.map((folder) => folder.uri.path)
-            .join('\n')}`;
+            ? `find in: ${sizeTreeDateProvider.searchFolder.fsPath}`
+            : `find in: ${vscode.workspace.workspaceFolders?.map((folder) => folder.uri.path).join('\n')}`;
     });
-
 
     const refresh = () => refreshEvent.fire();
     const sortByName = () => sortEvent.fire('size');
@@ -395,7 +396,9 @@ export function activate(context: vscode.ExtensionContext) {
     };
     const revealInExplorer = (item: TreeItem) => {
         let fsPath = item.resourceUri?.fsPath;
-        if(!fsPath) {return vscode.window.showErrorMessage('File path is invalid');}
+        if (!fsPath) {
+            return vscode.window.showErrorMessage('File path is invalid');
+        }
         void vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(fsPath));
     };
     const fileCallback = () => vscode.commands.executeCommand(Commands.refresh);
@@ -410,7 +413,7 @@ export function activate(context: vscode.ExtensionContext) {
     };
     const searchInFolder = async (item: vscode.Uri) => {
         let fsPath = item?.fsPath;
-        if(!fsPath) {
+        if (!fsPath) {
             return vscode.window.showErrorMessage('Current folder invalid, Please select folder in explorer.');
         }
         sizeTreeDateProvider.searchFolder = item;
@@ -434,20 +437,24 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(Commands.openSetting, openSetting),
         vscode.commands.registerCommand(Commands.searchInFolder, searchInFolder),
         vscode.commands.registerCommand(Commands.clearSearchFolder, clearSearchFolder),
-        vscode.commands.registerCommand(Commands.deleteGroupFiles, deleteGroupFiles)
+        vscode.commands.registerCommand(Commands.deleteGroupFiles, deleteGroupFiles),
     );
     context.subscriptions.push(sizeTreeView);
     context.subscriptions.push(
         vscode.workspace.onDidCreateFiles(fileCallback),
         vscode.workspace.onDidDeleteFiles(fileCallback),
         vscode.workspace.onDidRenameFiles(fileCallback),
-        vscode.workspace.onDidChangeConfiguration(event => {
-            if(!event.affectsConfiguration(viewId)) {return;}
+        vscode.workspace.onDidChangeConfiguration((event) => {
+            if (!event.affectsConfiguration(viewId)) {
+                return;
+            }
             sizeTreeDateProvider.updateExcludeSetting();
-        })
+        }),
     );
     context.subscriptions.push(refreshEvent, sortEvent, groupEvent, sizeTreeVisibleEvent);
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+    workerPool.destroy();
+}

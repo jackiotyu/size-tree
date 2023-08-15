@@ -16,3 +16,28 @@ export function resolvePatterns(...globalPatterns: (IExpression | undefined)[]):
 			return typeof value === 'boolean' && value;
 		});
 }
+
+/** 数组切分分组 */
+export function chunkList(list: any[], num: number){
+	let splitNum = num < 1 ? 1 : num;
+	let copyList = [...list];
+	let res = [];
+	let count = 0;
+	while(copyList.length && count < list.length) {
+		count++;
+		res.push(copyList.splice(0, splitNum));
+	}
+	return res;
+}
+
+export const convertBytes = function (bytes: number) {
+	const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+	if (bytes === 0) {
+		return 'n/a';
+	}
+	const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)) + '', 10);
+	if (i === 0) {
+		return bytes + ' ' + sizes[i];
+	}
+	return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
+};
