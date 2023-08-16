@@ -6,8 +6,11 @@ const RESET = Symbol();
 class CancellationToken extends EventEmitter {
     cancelled: boolean;
     constructor() {
-        super();
+        super({
+            captureRejections: false,
+        });
         this.cancelled = false;
+        this.setMaxListeners(100);
     }
     throwIfCancelled() {
         if (this.isCancelled()) {
@@ -18,7 +21,7 @@ class CancellationToken extends EventEmitter {
         return this.isCancelled();
     }
     onCancellationRequested(cb: (...args: any[]) => void) {
-        this.on('cancel', cb);
+        this.once('cancel', cb);
     }
     [RESET]() {
         this.cancelled = false;

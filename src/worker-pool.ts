@@ -35,7 +35,14 @@ export class WorkerPool {
 
     initWorker() {
         for (let i = 0; i < this.numberOfThreads; i++) {
-            const worker = new Worker(this.workerPath);
+            const worker = new Worker(this.workerPath, {
+                resourceLimits: {
+                    codeRangeSizeMb: 50,
+                    maxOldGenerationSizeMb: 50,
+                    maxYoungGenerationSizeMb: 50,
+                    stackSizeMb: 50,
+                },
+            });
             this._workersById[i] = worker;
             // 将这些 worker 设置为未激活状态
             this._activeWorkersById[i] = false;
@@ -68,7 +75,6 @@ export class WorkerPool {
             this.doAfterTaskIsFinished(worker, workerId);
         };
         const errorCallback = (error: any) => {
-            console.log('errorCallback', error);
             taskObj.cb(error);
             this.doAfterTaskIsFinished(worker, workerId);
         };
@@ -114,7 +120,10 @@ export class WorkerPool {
                 throw new Error(`The worker ${i} is still running!`);
             }
             // 销毁这个 Worker
+            this._workersById[i].removeAllListeners();
             this._workersById[i].terminate();
         }
+        this._workersById = {};
+        this._activeWorkersById = {};
     }
 }
