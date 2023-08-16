@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.0.9] - 2023-08-16
+
+### Added
+
+- add Chinese localize.
+
 ## [0.0.8] - 2023-08-15
 
 ### Fixed
