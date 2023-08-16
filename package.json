@@ -28,64 +28,64 @@
     "commands": [
       {
         "command": "size-tree.refresh",
-        "title": "Refresh size tree",
+        "title": "%cmd.refresh%",
         "icon": "$(refresh)"
       },
       {
         "command": "size-tree.sortByName",
-        "title": "Sort by name",
+        "title": "%cmd.sortByName%",
         "icon": "$(case-sensitive)"
       },
       {
         "command": "size-tree.sortBySize",
-        "title": "Sort by size",
+        "title": "%cmd.sortBySize%",
         "icon": "$(file)"
       },
       {
         "command": "size-tree.descend",
-        "title": "Descend",
+        "title": "%cmd.descend%",
         "icon": "$(arrow-down)"
       },
       {
         "command": "size-tree.ascend",
-        "title": "Ascend",
+        "title": "%cmd.ascend%",
         "icon": "$(arrow-up)"
       },
       {
         "command": "size-tree.groupByType",
-        "title": "Group by file type",
+        "title": "%cmd.groupByType%",
         "icon": "$(group-by-ref-type)"
       },
       {
         "command": "size-tree.ungroupByType",
-        "title": "Ungroup by file type",
+        "title": "%cmd.ungroupByType%",
         "icon": "$(ungroup-by-ref-type)"
       },
       {
         "command": "size-tree.deleteSelected",
-        "title": "Delete selected files/dirs"
+        "title": "%cmd.deleteSelected%"
       },
       {
         "command": "size-tree.deleteGroupFiles",
-        "title": "Delete files in current group"
+        "title": "%cmd.deleteGroupFiles%"
       },
       {
         "command": "size-tree.revealInExplorer",
-        "title": "Reveal in explorer"
+        "title": "%cmd.revealInExplorer%"
       },
       {
         "command": "size-tree.openSetting",
-        "title": "Open size-tree setting",
+        "title": "%cmd.openSetting%",
         "icon": "$(settings-gear)"
       },
       {
         "command": "size-tree.searchInFolder",
-        "title": "📦 List folder's files in size-tree",
+        "title": "%cmd.searchInFolder%",
         "icon": "$(circle-large)"
       },
       {
         "command": "size-tree.clearSearchFolder",
-        "title": "Clear Current Search Folder",
+        "title": "%cmd.clearSearchFolder%",
         "icon": "$(circle-slash)"
       }
     ],
@@ -218,11 +218,11 @@
       ]
     },
     "configuration": {
-      "title": "configuration of size-tree",
+      "title": "%config.title%",
       "properties": {
         "sizeTree.useExcludeDefault": {
           "type": "boolean",
-          "description": "default exclude from `files.exclude` & `search.exclude`",
+          "description": "%config.useExcludeDefault.desc%",
           "scope": "resource",
           "default": true
         }
@@ -256,5 +256,7 @@
     "webpack": "^5.81.0",
     "webpack-cli": "^5.0.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "vscode-nls-i18n": "^0.2.4"
+  }
 }

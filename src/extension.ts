@@ -5,6 +5,8 @@ import os from 'os';
 import { resolvePatterns, IExpression, chunkList, convertBytes } from './utils';
 import { WorkerPool } from './worker-pool';
 
+import { init, localize } from 'vscode-nls-i18n';
+
 enum Commands {
     refresh = 'size-tree.refresh',
     sortByName = 'size-tree.sortByName',
@@ -57,6 +59,8 @@ const cpusLength = Math.min(os.cpus().length, 6);
 let workerPool: WorkerPool;
 
 export function activate(context: vscode.ExtensionContext) {
+    init(context.extensionPath);
+
     workerPool = new WorkerPool(path.resolve(__dirname, './worker.js'), cpusLength);
 
     const viewId = 'sizeTree';
@@ -79,9 +83,9 @@ export function activate(context: vscode.ExtensionContext) {
             );
             this.iconPath = vscode.ThemeIcon.File;
             this.tooltip = new vscode.MarkdownString(``);
-            this.tooltip.appendMarkdown(`- name: ${file.filename}\n`);
-            this.tooltip.appendMarkdown(`- path: *${file.fsPath}*\n`);
-            this.tooltip.appendMarkdown(`- size: ${file.humanReadableSize}`);
+            this.tooltip.appendMarkdown(localize('treeItem.tooltip.name', file.filename));
+            this.tooltip.appendMarkdown(localize('treeItem.tooltip.path', file.fsPath));
+            this.tooltip.appendMarkdown(localize('treeItem.tooltip.size', file.humanReadableSize));
             this.description = `${file.humanReadableSize}`;
             this.contextValue = TreeItemContext.fileItem;
             this.command = {
@@ -105,9 +109,9 @@ export function activate(context: vscode.ExtensionContext) {
             const totalSize = convertBytes(group.size);
             this.description = `${count} - ${totalSize}`;
             this.tooltip = new vscode.MarkdownString('');
-            this.tooltip.appendMarkdown(`- type: ${type}\n`);
-            this.tooltip.appendMarkdown(`- total: ${count}\n`);
-            this.tooltip.appendMarkdown(`- size: ${totalSize}\n`);
+            this.tooltip.appendMarkdown(localize('treeItem.tooltip.type', type));
+            this.tooltip.appendMarkdown(localize('treeItem.tooltip.total', `${count}`));
+            this.tooltip.appendMarkdown(localize('treeItem.tooltip.size', totalSize));
             this.children = children;
             this.contextValue = TreeItemContext.fileGroup;
         }
@@ -351,11 +355,14 @@ export function activate(context: vscode.ExtensionContext) {
     sizeTreeDateProvider.onDidChangeTreeData(() => {
         const totalSize = convertBytes(sizeTreeDateProvider.totalSize);
         const count = sizeTreeDateProvider.count;
-        sizeTreeView.message = `📦 size ${totalSize} | count ${count}`;
+        sizeTreeView.message = localize('tree.desc.message', `${totalSize}`, `${count}`);
         // TODO 搜索排除文件夹
-        sizeTreeView.description = sizeTreeDateProvider.searchFolder
-            ? `find in: ${sizeTreeDateProvider.searchFolder.fsPath}`
-            : `find in: ${vscode.workspace.workspaceFolders?.map((folder) => folder.uri.path).join('\n')}`;
+        sizeTreeView.description = localize(
+            'tree.desc.findIn',
+            sizeTreeDateProvider.searchFolder
+                ? sizeTreeDateProvider.searchFolder.fsPath
+                : `${vscode.workspace.workspaceFolders?.map((folder) => folder.uri.path).join('\n') || ''}`,
+        );
     });
 
     const refresh = () => refreshEvent.fire();
@@ -367,9 +374,13 @@ export function activate(context: vscode.ExtensionContext) {
         if (!items?.length) {
             return;
         }
-        let confirm = 'confirm';
-        let cancel = 'cancel';
-        let res = await vscode.window.showWarningMessage(`Confirm Delete? selected ${items!.length} items`, confirm, cancel);
+        let confirm = localize('btn.confirm');
+        let cancel = localize('btn.cancel');
+        let res = await vscode.window.showWarningMessage(
+            localize('msg.warn.confirmDeleteItems', `${items!.length}`),
+            confirm,
+            cancel,
+        );
         if (res !== confirm) {
             return;
         }
@@ -383,21 +394,25 @@ export function activate(context: vscode.ExtensionContext) {
         });
     };
     const deleteGroupFiles = async (treeItem: FileTypeItem) => {
-        let confirm = 'confirm';
-        let cancel = 'cancel';
-        let res = await vscode.window.showWarningMessage(`Confirm Delete? selected all ${treeItem.label || 'empty extname'} files`, confirm, cancel);
-        if (res !== confirm) {return;}
-        let items = treeItem.children.map(i => i.fsPath);
-        Promise.allSettled(
-            items.map((fsPath) => fs.rm(fsPath)),
-        ).then(() => {
+        let confirm = localize('btn.confirm');
+        let cancel = localize('btn.cancel');
+        let res = await vscode.window.showWarningMessage(
+            localize('msg.warn.confirmDeleteGroup', `${treeItem.label}` || localize('msg.emptyExt')),
+            confirm,
+            cancel,
+        );
+        if (res !== confirm) {
+            return;
+        }
+        let items = treeItem.children.map((i) => i.fsPath);
+        Promise.allSettled(items.map((fsPath) => fs.rm(fsPath))).then(() => {
             fileCallback();
         });
     };
     const revealInExplorer = (item: TreeItem) => {
         let fsPath = item.resourceUri?.fsPath;
         if (!fsPath) {
-            return vscode.window.showErrorMessage('File path is invalid');
+            return vscode.window.showErrorMessage(localize('msg.error.invalidFilePath'));
         }
         void vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(fsPath));
     };
@@ -414,7 +429,7 @@ export function activate(context: vscode.ExtensionContext) {
     const searchInFolder = async (item: vscode.Uri) => {
         let fsPath = item?.fsPath;
         if (!fsPath) {
-            return vscode.window.showErrorMessage('Current folder invalid, Please select folder in explorer.');
+            return vscode.window.showErrorMessage(localize('msg.error.invalidFolder'));
         }
         sizeTreeDateProvider.searchFolder = item;
         vscode.commands.executeCommand(`${viewId}.focus`);
