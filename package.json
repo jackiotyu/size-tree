@@ -33,32 +33,32 @@
       },
       {
         "command": "size-tree.sortByName",
-        "title": "%cmd.sortByName%",
+        "title": "%cmd.sortBySize%",
         "icon": "$(case-sensitive)"
       },
       {
         "command": "size-tree.sortBySize",
-        "title": "%cmd.sortBySize%",
+        "title": "%cmd.sortByName%",
         "icon": "$(file)"
       },
       {
         "command": "size-tree.descend",
-        "title": "%cmd.descend%",
+        "title": "%cmd.ascend%",
         "icon": "$(arrow-down)"
       },
       {
         "command": "size-tree.ascend",
-        "title": "%cmd.ascend%",
+        "title": "%cmd.descend%",
         "icon": "$(arrow-up)"
       },
       {
         "command": "size-tree.groupByType",
-        "title": "%cmd.groupByType%",
+        "title": "%cmd.ungroupByType%",
         "icon": "$(group-by-ref-type)"
       },
       {
         "command": "size-tree.ungroupByType",
-        "title": "%cmd.ungroupByType%",
+        "title": "%cmd.groupByType%",
         "icon": "$(ungroup-by-ref-type)"
       },
       {
@@ -167,32 +167,32 @@
         {
           "command": "size-tree.descend",
           "when": "view == sizeTree && !sizeTree.asc",
-          "group": "navigation@3"
+          "group": "view/title@3"
         },
         {
           "command": "size-tree.ascend",
           "when": "view == sizeTree && sizeTree.asc",
-          "group": "navigation@3"
+          "group": "view/title@3"
         },
         {
           "command": "size-tree.sortBySize",
           "when": "view == sizeTree && sizeTree.sortKey === 'size'",
-          "group": "navigation@2"
+          "group": "view/title@2"
         },
         {
           "command": "size-tree.sortByName",
           "when": "view == sizeTree && sizeTree.sortKey === 'filename'",
-          "group": "navigation@2"
+          "group": "view/title@2"
         },
         {
           "command": "size-tree.ungroupByType",
           "when": "view == sizeTree && sizeTree.group === false",
-          "group": "navigation@1"
+          "group": "view/title@1"
         },
         {
           "command": "size-tree.groupByType",
           "when": "view == sizeTree && sizeTree.group === true",
-          "group": "navigation@1"
+          "group": "view/title@1"
         }
       ],
       "view/item/context": [
