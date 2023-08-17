@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.1.0] - 2023-08-17
+
+### Added
+
+- add `sizeTree.ignoreRule` to settings
+- adjust icon
+
 ## [0.0.9] - 2023-08-16
 
 ### Added
