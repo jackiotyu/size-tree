@@ -36,6 +36,7 @@ enum TreeItemType {
 
 enum Configuration {
     useExcludeDefault = 'useExcludeDefault',
+    ignoreFolders = 'ignoreFolders',
 }
 
 interface FileInfo {
@@ -128,33 +129,35 @@ export function activate(context: vscode.ExtensionContext) {
         private _group: boolean = true;
         private _searchFolder?: vscode.Uri;
         private stopSearchToken: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
-        private _useExclude: boolean = true;
+        private useExclude: boolean = true;
+        private ignoreFolders: string[] = [];
         constructor() {
-            this.refresh();
             refreshEvent.event(this.refresh);
             sortEvent.event(this.sort);
             groupEvent.event(this.handleGroup);
-            this.updateExcludeSetting();
+            if (!this.updateExcludeSetting()) {
+                this.refresh();
+            }
             vscode.commands.executeCommand('setContext', 'sizeTree.asc', this._asc);
             vscode.commands.executeCommand('setContext', 'sizeTree.sortKey', this._sortKey);
             vscode.commands.executeCommand('setContext', 'sizeTree.group', this._group);
             vscode.commands.executeCommand('setContext', 'sizeTree.searchFolder', false);
         }
         updateExcludeSetting() {
-            this.useExclude = !!vscode.workspace.getConfiguration(viewId).get<boolean>(Configuration.useExcludeDefault);
+            const ignoreFolders =
+                vscode.workspace.getConfiguration(viewId).get<string[]>(Configuration.ignoreFolders) || [];
+            const useExclude = !!vscode.workspace
+                .getConfiguration(viewId)
+                .get<boolean>(Configuration.useExcludeDefault);
+            const needRefresh =
+                this.ignoreFolders.toString() !== ignoreFolders.toString() || useExclude !== this.useExclude;
+            this.ignoreFolders = ignoreFolders;
+            this.useExclude = useExclude;
+            needRefresh && this.refresh();
+            return needRefresh;
         }
         search(fsPath: string) {
             return this.files.find((file) => file.fsPath === fsPath);
-        }
-        get useExclude() {
-            return this._useExclude;
-        }
-        set useExclude(value: boolean) {
-            if (!!value === this._useExclude) {
-                return;
-            }
-            this._useExclude = !!value;
-            this.refresh();
         }
         get totalSize() {
             return this.files.reduce((total, file) => ((total += file.size || 0), total), 0);
@@ -250,11 +253,17 @@ export function activate(context: vscode.ExtensionContext) {
             this.stopSearchToken = new vscode.CancellationTokenSource();
 
             let pattern = '';
+            let excludePatternList: string[] = [];
             if (this.useExclude) {
-                let excludePatternList: string[] = resolvePatterns(
-                    vscode.workspace.getConfiguration('files').get<IExpression>('exclude'),
-                    vscode.workspace.getConfiguration('search').get<IExpression>('exclude'),
+                excludePatternList.push(
+                    ...resolvePatterns(
+                        vscode.workspace.getConfiguration('files').get<IExpression>('exclude'),
+                        vscode.workspace.getConfiguration('search').get<IExpression>('exclude'),
+                    ),
                 );
+            }
+            excludePatternList.push(...this.ignoreFolders);
+            if (excludePatternList.length) {
                 pattern = '**/{' + excludePatternList.map((i) => i.replace('**/', '')).join(',') + '}';
             }
 

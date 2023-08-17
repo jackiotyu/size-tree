@@ -225,6 +225,15 @@
           "description": "%config.useExcludeDefault.desc%",
           "scope": "resource",
           "default": true
+        },
+        "sizeTree.ignoreFolders": {
+          "type": "array",
+          "description": "%config.ignoreFolders.desc%",
+          "items": {
+            "type": "string"
+          },
+          "scope": "resource",
+          "default": []
         }
       }
     }

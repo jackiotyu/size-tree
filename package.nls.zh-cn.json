@@ -14,6 +14,7 @@
     "cmd.clearSearchFolder": "重置搜索目录",
     "config.title": "size-tree 配置",
     "config.useExcludeDefault.desc": "默认排除 `files.exclude` 和 `search.exclude` 设置的目录",
+    "config.ignoreFolders.desc": "设置排除的目录",
     "btn.confirm": "确定",
     "btn.cancel": "取消",
     "msg.error.invalidFolder": "当前目录无效,请在资源管理器中选择文件夹",

@@ -14,6 +14,7 @@
     "cmd.clearSearchFolder": "Clear Current Search Folder",
     "config.title": "configuration of size-tree",
     "config.useExcludeDefault.desc": "default exclude from `files.exclude` & `search.exclude`",
+    "config.ignoreFolders.desc": "set ignore folders",
     "btn.confirm": "confirm",
     "btn.cancel": "cancel",
     "msg.error.invalidFolder": "Current folder invalid, Please select folder in explorer.",
