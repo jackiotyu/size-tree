@@ -36,7 +36,7 @@ enum TreeItemType {
 
 enum Configuration {
     useExcludeDefault = 'useExcludeDefault',
-    ignoreFolders = 'ignoreFolders',
+    ignoreRule = 'ignoreRule',
 }
 
 interface FileInfo {
@@ -130,7 +130,7 @@ export function activate(context: vscode.ExtensionContext) {
         private _searchFolder?: vscode.Uri;
         private stopSearchToken: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
         private useExclude: boolean = true;
-        private ignoreFolders: string[] = [];
+        private ignoreRule: string[] = [];
         constructor() {
             refreshEvent.event(this.refresh);
             sortEvent.event(this.sort);
@@ -144,14 +144,14 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand('setContext', 'sizeTree.searchFolder', false);
         }
         updateExcludeSetting() {
-            const ignoreFolders =
-                vscode.workspace.getConfiguration(viewId).get<string[]>(Configuration.ignoreFolders) || [];
+            const ignoreRule =
+                vscode.workspace.getConfiguration(viewId).get<string[]>(Configuration.ignoreRule) || [];
             const useExclude = !!vscode.workspace
                 .getConfiguration(viewId)
                 .get<boolean>(Configuration.useExcludeDefault);
             const needRefresh =
-                this.ignoreFolders.toString() !== ignoreFolders.toString() || useExclude !== this.useExclude;
-            this.ignoreFolders = ignoreFolders;
+                this.ignoreRule.toString() !== ignoreRule.toString() || useExclude !== this.useExclude;
+            this.ignoreRule = ignoreRule;
             this.useExclude = useExclude;
             needRefresh && this.refresh();
             return needRefresh;
@@ -262,7 +262,7 @@ export function activate(context: vscode.ExtensionContext) {
                     ),
                 );
             }
-            excludePatternList.push(...this.ignoreFolders);
+            excludePatternList.push(...this.ignoreRule);
             if (excludePatternList.length) {
                 pattern = '**/{' + excludePatternList.map((i) => i.replace('**/', '')).join(',') + '}';
             }
