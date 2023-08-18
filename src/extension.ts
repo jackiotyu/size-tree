@@ -256,8 +256,8 @@ export function activate(context: vscode.ExtensionContext) {
             if (this.useExclude) {
                 excludePatternList.push(
                     ...resolvePatterns(
-                        vscode.workspace.getConfiguration('files').get<IExpression>('exclude'),
-                        vscode.workspace.getConfiguration('search').get<IExpression>('exclude'),
+                        vscode.workspace.getConfiguration('files', null).get<IExpression>('exclude'),
+                        vscode.workspace.getConfiguration('search', null).get<IExpression>('exclude'),
                     ),
                 );
             }
@@ -276,12 +276,16 @@ export function activate(context: vscode.ExtensionContext) {
                     let cpuNum = cpusLength;
                     let chunkNum = Math.min(Math.floor(fsPathList.length / cpuNum), 400) || 1;
                     let splitFsPathList = chunkList(fsPathList, chunkNum);
+                    let stop = false;
                     this.stopSearchToken.token.onCancellationRequested(() => {
                         workerPool.stop();
-                        throw Error('isStop');
+                        stop = true;
                     });
                     let fileInfoList = await Promise.all(
                         splitFsPathList.map((fsPathList) => {
+                            if (stop) {
+                                throw Error('isStop');
+                            }
                             return workerPool.run<string[], FileInfo>(fsPathList);
                         }),
                     );

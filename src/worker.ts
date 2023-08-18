@@ -6,13 +6,17 @@ import { convertBytes } from './utils';
 
 let cancelToken = new CancellationTokenSource();
 
-async function process(fsPathList: string[]) {
+async function processList(fsPathList: string[]) {
     try {
+        let stop = false;
         cancelToken.token.onCancellationRequested(() => {
-            throw Error('isStop');
+            stop = true;
         });
         let list = await Promise.all(
             fsPathList.map(async (fsPath) => {
+                if (stop) {
+                    throw Error('isStop');
+                }
                 try {
                     let { size } = await fs.stat(fsPath);
                     let filename = path.basename(fsPath);
@@ -38,12 +42,14 @@ async function process(fsPathList: string[]) {
 parentPort?.on('message', (data: string[] | string) => {
     if (typeof data === 'string') {
         if (data === 'stop') {
-            cancelToken.cancel();
-            cancelToken.dispose();
+            try {
+                cancelToken.cancel();
+                cancelToken.dispose();
+            } catch {}
         }
         return;
     }
-    process(data)
+    processList(data)
         .then((fileInfoList) => {
             parentPort!.postMessage(fileInfoList);
         })
@@ -51,3 +57,6 @@ parentPort?.on('message', (data: string[] | string) => {
             parentPort!.postMessage([]);
         });
 });
+
+process.on('unhandledRejection', () => parentPort!.postMessage([]));
+process.on('uncaughtException', () => parentPort!.postMessage([]));
