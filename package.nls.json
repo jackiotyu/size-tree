@@ -9,6 +9,7 @@
     "cmd.deleteSelected": "Delete selected files/dirs",
     "cmd.deleteGroupFiles": "Delete files in current group",
     "cmd.revealInExplorer": "Reveal in explorer",
+    "cmd.revealInSystemExplorer": "Reveal in system file explorer",
     "cmd.openSetting": "Open size-tree setting",
     "cmd.searchInFolder": "📦 List folder's files in size-tree",
     "cmd.clearSearchFolder": "Clear Current Search Folder",

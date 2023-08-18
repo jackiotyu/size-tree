@@ -9,6 +9,7 @@
     "cmd.deleteSelected": "删除选中的文件",
     "cmd.deleteGroupFiles": "删除当前分组的所有文件",
     "cmd.revealInExplorer": "在资源管理器中显示",
+    "cmd.revealInSystemExplorer": "在系统文件资源管理器中显示",
     "cmd.openSetting": "打开 size-tree 设置",
     "cmd.searchInFolder": "📦在 size-tree 中列出文件夹内的文件",
     "cmd.clearSearchFolder": "重置搜索目录",

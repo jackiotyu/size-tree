@@ -74,6 +74,10 @@
         "title": "%cmd.revealInExplorer%"
       },
       {
+        "command": "size-tree.revealInSystemExplorer",
+        "title": "%cmd.revealInSystemExplorer%"
+      },
+      {
         "command": "size-tree.openSetting",
         "title": "%cmd.openSetting%",
         "icon": "$(settings-gear)"
@@ -133,6 +137,10 @@
         },
         {
           "command": "size-tree.revealInExplorer",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.revealInSystemExplorer",
           "when": "false"
         },
         {
@@ -202,6 +210,10 @@
         },
         {
           "command": "size-tree.revealInExplorer",
+          "when": "view == sizeTree && viewItem == sizeTree.fileItem"
+        },
+        {
+          "command": "size-tree.revealInSystemExplorer",
           "when": "view == sizeTree && viewItem == sizeTree.fileItem"
         },
         {

@@ -15,6 +15,7 @@ enum Commands {
     ascend = 'size-tree.ascend',
     deleteSelected = 'size-tree.deleteSelected',
     revealInExplorer = 'size-tree.revealInExplorer',
+    revealInSystemExplorer = 'size-tree.revealInSystemExplorer',
     groupByType = 'size-tree.groupByType',
     ungroupByType = 'size-tree.ungroupByType',
     revealInSizeTree = 'size-tree.revealInSizeTree',
@@ -144,13 +145,11 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand('setContext', 'sizeTree.searchFolder', false);
         }
         updateExcludeSetting() {
-            const ignoreRule =
-                vscode.workspace.getConfiguration(viewId).get<string[]>(Configuration.ignoreRule) || [];
+            const ignoreRule = vscode.workspace.getConfiguration(viewId).get<string[]>(Configuration.ignoreRule) || [];
             const useExclude = !!vscode.workspace
                 .getConfiguration(viewId)
                 .get<boolean>(Configuration.useExcludeDefault);
-            const needRefresh =
-                this.ignoreRule.toString() !== ignoreRule.toString() || useExclude !== this.useExclude;
+            const needRefresh = this.ignoreRule.toString() !== ignoreRule.toString() || useExclude !== this.useExclude;
             this.ignoreRule = ignoreRule;
             this.useExclude = useExclude;
             needRefresh && this.refresh();
@@ -418,12 +417,16 @@ export function activate(context: vscode.ExtensionContext) {
             fileCallback();
         });
     };
-    const revealInExplorer = (item: TreeItem) => {
+    const revealInExplorer = (isSystem: boolean, item: TreeItem) => {
         let fsPath = item.resourceUri?.fsPath;
         if (!fsPath) {
             return vscode.window.showErrorMessage(localize('msg.error.invalidFilePath'));
         }
-        void vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(fsPath));
+        if (isSystem) {
+            vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(fsPath));
+        } else {
+            vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(fsPath));
+        }
     };
     const fileCallback = () => vscode.commands.executeCommand(Commands.refresh);
     const groupByType = () => {
@@ -455,7 +458,10 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(Commands.descend, toggleSort),
         vscode.commands.registerCommand(Commands.ascend, toggleSort),
         vscode.commands.registerCommand(Commands.deleteSelected, deleteSelected),
-        vscode.commands.registerCommand(Commands.revealInExplorer, revealInExplorer),
+        vscode.commands.registerCommand(Commands.revealInExplorer, (item: TreeItem) => revealInExplorer(false, item)),
+        vscode.commands.registerCommand(Commands.revealInSystemExplorer, (item: TreeItem) =>
+            revealInExplorer(true, item),
+        ),
         vscode.commands.registerCommand(Commands.groupByType, ungroupByType),
         vscode.commands.registerCommand(Commands.ungroupByType, groupByType),
         vscode.commands.registerCommand(Commands.openSetting, openSetting),
