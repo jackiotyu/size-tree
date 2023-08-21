@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.1.1] - 2023-08-21
+
+### Added
+
+- add `reveal in explorer` command to treeItem
+
+### Fixed
+
+- catch error
+
 ## [0.1.0] - 2023-08-17
 
 ### Added
