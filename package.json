@@ -225,7 +225,7 @@
         {
           "command": "size-tree.searchInFolder",
           "group": "4_search@99",
-          "when": "explorerResourceIsFolder"
+          "when": "explorerResourceIsFolder && config.sizeTree.showSearchInExplorerContextMenu"
         }
       ]
     },
@@ -246,6 +246,12 @@
           },
           "scope": "resource",
           "default": []
+        },
+        "sizeTree.showSearchInExplorerContextMenu": {
+          "type": "boolean",
+          "description": "%config.showSearchInExplorerContextMenu.desc%",
+          "scope": "resource",
+          "default": true
         }
       }
     }

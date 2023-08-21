@@ -15,6 +15,7 @@
     "cmd.clearSearchFolder": "Clear Current Search Folder",
     "config.title": "configuration of size-tree",
     "config.useExcludeDefault.desc": "default exclude from `files.exclude` & `search.exclude`",
+    "config.showSearchInExplorerContextMenu.desc": "whether show search command in explorer context menu",
     "config.ignoreRule.desc": "set ignore folder or file, eg: dist dist-* *.test.js",
     "btn.confirm": "confirm",
     "btn.cancel": "cancel",

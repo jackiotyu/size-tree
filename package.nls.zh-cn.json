@@ -15,6 +15,7 @@
     "cmd.clearSearchFolder": "重置搜索目录",
     "config.title": "size-tree 配置",
     "config.useExcludeDefault.desc": "默认排除 `files.exclude` 和 `search.exclude` 设置的目录",
+    "config.showSearchInExplorerContextMenu.desc": "是否在资源管理器上下文菜单中展示搜索命令 ",
     "config.ignoreRule.desc": "设置排除的目录或文件, 例如: dist dist-* *.test.js",
     "btn.confirm": "确定",
     "btn.cancel": "取消",
