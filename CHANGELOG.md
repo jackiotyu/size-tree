@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.1.2] - 2023-08-22
+
+### Added
+
+- display file size percent in treeItem
+- change README
+
 ## [0.1.1] - 2023-08-21
 
 ### Added
