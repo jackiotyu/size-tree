@@ -55,21 +55,19 @@
 Quick show file size and delete files by one click.
 快速展示文件大小、一键删除选中文件
 
-* sort by name 根据文件名排序
-* sort by file size 根据文件大小排序
-* group/ungroup by file type 通过文件类型分组/不分组
-
-Use the `BLANK_README.md` to get started.
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+Open explorer and click to open the size-tree tab.
+打开资源管理器，点击size tree面板
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+* sort by name 根据文件名排序
+* sort by file size 根据文件大小排序
+* group/ungroup by file type 通过文件类型分组/不分组
+* config ignore files/folders 配置忽略的文件/目录
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
