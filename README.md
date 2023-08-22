@@ -147,9 +147,9 @@ Project Link: [https://github.com/jackiotyu/size-tree](https://github.com/jackio
 [issues-shield]: https://img.shields.io/github/issues/jackiotyu/size-tree.svg?style=for-the-badge
 [issues-url]: https://github.com/jackiotyu/size-tree/issues
 [license-shield]: https://img.shields.io/github/license/jackiotyu/size-tree.svg?style=for-the-badge
-[license-url]: https://github.com/jackiotyu/size-tree/blob/master/LICENSE.txt
-[context-menu-screenshot]: images/context-menu-screenshot.png
-[product-screenshot]: images/product-screenshot.png
-[sort-setting-screenshot]: images/sort-setting-screenshot.png
-[open-setting-screenshot]: images/open-setting-screenshot.png
-[action-preview]: images/preview.gif
+[license-url]: https://github.com/jackiotyu/size-tree/blob/master/LICENSE
+[context-menu-screenshot]: https://github.com/jackiotyu/size-tree/raw/HEAD/images/context-menu-screenshot.png
+[product-screenshot]: https://github.com/jackiotyu/size-tree/raw/HEAD/images/product-screenshot.png
+[sort-setting-screenshot]: https://github.com/jackiotyu/size-tree/raw/HEAD/images/sort-setting-screenshot.png
+[open-setting-screenshot]: https://github.com/jackiotyu/size-tree/raw/HEAD/images/open-setting-screenshot.png
+[action-preview]: https://github.com/jackiotyu/size-tree/raw/HEAD/images/preview.gif
