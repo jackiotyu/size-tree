@@ -18,9 +18,9 @@
   <h3 align="center">Size Tree</h3>
 
   <p align="center">
-    Quickly sort files by size and delete files by one click.
+    Quickly sort all files by size and delete files by one click in vscode.
     <br />
-    快速按大小排序文件、一键删除选中文件
+    在vscode中快速按大小排序全部文件、一键删除选中文件
     <br />
     <a href="https://github.com/jackiotyu/size-tree"><strong>Explore the docs »</strong></a>
     <br />
@@ -50,10 +50,11 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://github.com/jackiotyu/size-tree)
+Quick show all file size in workspace and delete files by one click.
+快速展示工作目录的所有文件大小、一键删除选中文件
 
-Quick show file size and delete files by one click.
-快速展示文件大小、一键删除选中文件
+[![Action Screen Shot][action-preview]](https://github.com/jackiotyu/size-tree)
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -64,13 +65,26 @@ Quick show file size and delete files by one click.
 Open explorer and click to open the size-tree tab.
 打开资源管理器，点击size tree面板
 
+[![Sort Setting Screen Shot][sort-setting-screenshot]](https://github.com/jackiotyu/size-tree)
 * sort by name 根据文件名排序
 * sort by file size 根据文件大小排序
 * group/ungroup by file type 通过文件类型分组/不分组
+
+[![Setting Screen Shot][open-setting-screenshot]](https://github.com/jackiotyu/size-tree)
+
 * config ignore files/folders 配置忽略的文件/目录
+
+[![Context Menu Screen Shot][context-menu-screenshot]](https://github.com/jackiotyu/size-tree)
+
 * click size-tree's treeItem to open file 点击size-tree上的文件项可以打开文件
 * reveal in (system) explorer by context menu 上下文菜单中可以直接在(系统)资源管理器中打开文件
 * delete selected files by context menu 上下文菜单中可以直接删除选中的文件
+
+[![Size Tree Screen Shot][product-screenshot]](https://github.com/jackiotyu/size-tree)
+
+* show file detail 展示文件详情
+
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -79,6 +93,7 @@ Open explorer and click to open the size-tree tab.
 <!-- ROADMAP -->
 ## Roadmap
 
+- [x] ignore files/folders
 - [x] delete selected files
 - [x] group by file type
 - [x] sort by size
@@ -133,4 +148,8 @@ Project Link: [https://github.com/jackiotyu/size-tree](https://github.com/jackio
 [issues-url]: https://github.com/jackiotyu/size-tree/issues
 [license-shield]: https://img.shields.io/github/license/jackiotyu/size-tree.svg?style=for-the-badge
 [license-url]: https://github.com/jackiotyu/size-tree/blob/master/LICENSE.txt
-[product-screenshot]: images/preview.gif
+[context-menu-screenshot]: images/context-menu-screenshot.png
+[product-screenshot]: images/product-screenshot.png
+[sort-setting-screenshot]: images/sort-setting-screenshot.png
+[open-setting-screenshot]: images/open-setting-screenshot.png
+[action-preview]: images/preview.gif

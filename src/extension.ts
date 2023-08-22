@@ -16,6 +16,8 @@ enum Commands {
     deleteSelected = 'size-tree.deleteSelected',
     revealInExplorer = 'size-tree.revealInExplorer',
     revealInSystemExplorer = 'size-tree.revealInSystemExplorer',
+    copyFilePath = 'size-tree.copyFilePath',
+    copyRelativeFilePath = 'size-tree.copyRelativeFilePath',
     groupByType = 'size-tree.groupByType',
     ungroupByType = 'size-tree.ungroupByType',
     revealInSizeTree = 'size-tree.revealInSizeTree',
@@ -53,6 +55,7 @@ interface FileGroup {
     filename: string;
     size: number;
     list: FileInfo[];
+    percent: number;
 }
 
 type SortType = 'name' | 'size' | 'toggleSort';
@@ -87,7 +90,9 @@ export function activate(context: vscode.ExtensionContext) {
             this.tooltip = new vscode.MarkdownString(``);
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.name', file.filename));
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.path', file.fsPath));
-            this.tooltip.appendMarkdown(localize('treeItem.tooltip.size', file.humanReadableSize));
+            this.tooltip.appendMarkdown(
+                localize('treeItem.tooltip.size', `${file.humanReadableSize} (${file.size} B)`),
+            );
             this.description = `${file.humanReadableSize}`;
             this.contextValue = TreeItemContext.fileItem;
             this.command = {
@@ -109,11 +114,13 @@ export function activate(context: vscode.ExtensionContext) {
             let children = group.list;
             const count = children.length;
             const totalSize = convertBytes(group.size);
-            this.description = `${count} - ${totalSize}`;
+            const percent = group.percent;
+            this.description = `${count} - ${totalSize} - ${percent.toFixed(1)}%`;
             this.tooltip = new vscode.MarkdownString('');
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.type', type));
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.total', `${count}`));
-            this.tooltip.appendMarkdown(localize('treeItem.tooltip.size', totalSize));
+            this.tooltip.appendMarkdown(localize('treeItem.tooltip.size', `${totalSize} (${group.size} B)`));
+            this.tooltip.appendMarkdown(localize('treeItem.tooltip.percent', `${percent.toFixed(5)}%`));
             this.children = children;
             this.contextValue = TreeItemContext.fileGroup;
         }
@@ -311,10 +318,14 @@ export function activate(context: vscode.ExtensionContext) {
                     this.files.forEach((file) => {
                         let extname = path.extname(file.fsPath);
                         if (!map.has(extname)) {
-                            map.set(extname, { size: 0, list: [], filename: extname });
+                            map.set(extname, { size: 0, list: [], filename: extname, percent: 0 });
                         }
                         map.get(extname)!.size += file.size;
                         map.get(extname)!.list.push(file);
+                    });
+                    let totalSize = [...map.values()].reduce((total, i) => total + i.size, 0);
+                    map.forEach((fileGroup) => {
+                        fileGroup.percent = (fileGroup.size / totalSize) * 100;
                     });
                     return [...map.entries()]
                         .sort((a, b) => this.sortFunc(a[1], b[1]))
@@ -368,7 +379,6 @@ export function activate(context: vscode.ExtensionContext) {
         const totalSize = convertBytes(sizeTreeDateProvider.totalSize);
         const count = sizeTreeDateProvider.count;
         sizeTreeView.message = localize('tree.desc.message', `${totalSize}`, `${count}`);
-        // TODO 搜索排除文件夹
         sizeTreeView.description = localize(
             'tree.desc.findIn',
             sizeTreeDateProvider.searchFolder
@@ -432,6 +442,17 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(fsPath));
         }
     };
+    const copyFilePath = (isRelativePath: boolean, item: TreeItem) => {
+        let fsPath = item.resourceUri?.fsPath;
+        if (!fsPath) {
+            return;
+        }
+        if (isRelativePath) {
+            vscode.commands.executeCommand('copyRelativeFilePath', vscode.Uri.file(fsPath));
+        } else {
+            vscode.commands.executeCommand('copyFilePath', vscode.Uri.file(fsPath));
+        }
+    };
     const fileCallback = () => vscode.commands.executeCommand(Commands.refresh);
     const groupByType = () => {
         groupEvent.fire(true);
@@ -466,6 +487,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(Commands.revealInSystemExplorer, (item: TreeItem) =>
             revealInExplorer(true, item),
         ),
+        vscode.commands.registerCommand(Commands.copyFilePath, (item: TreeItem) => copyFilePath(false, item)),
+        vscode.commands.registerCommand(Commands.copyRelativeFilePath, (item: TreeItem) => copyFilePath(true, item)),
         vscode.commands.registerCommand(Commands.groupByType, ungroupByType),
         vscode.commands.registerCommand(Commands.ungroupByType, groupByType),
         vscode.commands.registerCommand(Commands.openSetting, openSetting),

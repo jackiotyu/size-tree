@@ -78,6 +78,14 @@
         "title": "%cmd.revealInSystemExplorer%"
       },
       {
+        "command": "size-tree.copyFilePath",
+        "title": "%cmd.copyFilePath%"
+      },
+      {
+        "command": "size-tree.copyRelativeFilePath",
+        "title": "%cmd.copyRelativeFilePath%"
+      },
+      {
         "command": "size-tree.openSetting",
         "title": "%cmd.openSetting%",
         "icon": "$(settings-gear)"
@@ -144,6 +152,14 @@
           "when": "false"
         },
         {
+          "command": "size-tree.copyFilePath",
+          "when": "false"
+        },
+        {
+          "command": "size-tree.copyRelativeFilePath",
+          "when": "false"
+        },
+        {
           "command": "size-tree.searchInFolder",
           "when": "false"
         },
@@ -206,15 +222,28 @@
       "view/item/context": [
         {
           "command": "size-tree.deleteSelected",
-          "when": "view == sizeTree && viewItem == sizeTree.fileItem"
+          "when": "view == sizeTree && viewItem == sizeTree.fileItem",
+          "group": "delete@1"
         },
         {
           "command": "size-tree.revealInExplorer",
-          "when": "view == sizeTree && viewItem == sizeTree.fileItem"
+          "when": "view == sizeTree && viewItem == sizeTree.fileItem",
+          "group": "reveal@1"
         },
         {
           "command": "size-tree.revealInSystemExplorer",
-          "when": "view == sizeTree && viewItem == sizeTree.fileItem"
+          "when": "view == sizeTree && viewItem == sizeTree.fileItem",
+          "group": "reveal@2"
+        },
+        {
+          "command": "size-tree.copyRelativeFilePath",
+          "when": "view == sizeTree && viewItem == sizeTree.fileItem",
+          "group": "copy@1"
+        },
+        {
+          "command": "size-tree.copyFilePath",
+          "when": "view == sizeTree && viewItem == sizeTree.fileItem",
+          "group": "copy@2"
         },
         {
           "command": "size-tree.deleteGroupFiles",
