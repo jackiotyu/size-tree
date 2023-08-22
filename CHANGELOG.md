@@ -4,7 +4,7 @@
 
 ### Added
 
-- add `reveal in explorer` command to treeItem
+- add `reveal in system explorer` command to treeItem
 
 ### Fixed
 
