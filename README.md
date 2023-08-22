@@ -68,6 +68,9 @@ Open explorer and click to open the size-tree tab.
 * sort by file size 根据文件大小排序
 * group/ungroup by file type 通过文件类型分组/不分组
 * config ignore files/folders 配置忽略的文件/目录
+* click size-tree's treeItem to open file 点击size-tree上的文件项可以打开文件
+* reveal in (system) explorer by context menu 上下文菜单中可以直接在(系统)资源管理器中打开文件
+* delete selected files by context menu 上下文菜单中可以直接删除选中的文件
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -76,6 +79,7 @@ Open explorer and click to open the size-tree tab.
 <!-- ROADMAP -->
 ## Roadmap
 
+- [x] delete selected files
 - [x] group by file type
 - [x] sort by size
 - [x] sort by name
