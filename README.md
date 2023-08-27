@@ -12,7 +12,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/jackiotyu/size-tree">
-    <img src="images/icon.png" alt="Logo" width="80" height="80">
+    <img src="https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/icon.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Size Tree</h3>
