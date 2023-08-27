@@ -148,8 +148,8 @@ Project Link: [https://github.com/jackiotyu/size-tree](https://github.com/jackio
 [issues-url]: https://github.com/jackiotyu/size-tree/issues
 [license-shield]: https://img.shields.io/github/license/jackiotyu/size-tree.svg?style=for-the-badge
 [license-url]: https://github.com/jackiotyu/size-tree/blob/master/LICENSE
-[context-menu-screenshot]: hhttps://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/context-menu-screenshot.png
-[product-screenshot]: hhttps://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/product-screenshot.png
-[sort-setting-screenshot]: hhttps://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/sort-setting-screenshot.png
-[open-setting-screenshot]: hhttps://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/open-setting-screenshot.png
-[action-preview]: hhttps://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/preview.gif
+[context-menu-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/context-menu-screenshot.png
+[product-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/product-screenshot.png
+[sort-setting-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/sort-setting-screenshot.png
+[open-setting-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/open-setting-screenshot.png
+[action-preview]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/preview.gif
