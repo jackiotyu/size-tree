@@ -100,7 +100,7 @@
       {
         "command": "size-tree.clearSearchFolder",
         "title": "%cmd.clearSearchFolder%",
-        "icon": "$(circle-slash)"
+        "icon": "$(search-stop)"
       }
     ],
     "views": {
