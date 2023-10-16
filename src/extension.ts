@@ -87,7 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
                 collapsibleState,
             );
             this.iconPath = vscode.ThemeIcon.File;
-            this.tooltip = new vscode.MarkdownString(``);
+            this.tooltip = new vscode.MarkdownString(``, true);
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.name', file.filename));
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.path', file.fsPath));
             this.tooltip.appendMarkdown(
@@ -116,7 +116,7 @@ export function activate(context: vscode.ExtensionContext) {
             const totalSize = convertBytes(group.size);
             const percent = group.percent;
             this.description = `${count} - ${totalSize} - ${percent.toFixed(1)}%`;
-            this.tooltip = new vscode.MarkdownString('');
+            this.tooltip = new vscode.MarkdownString('', true);
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.type', type));
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.total', `${count}`));
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.size', `${totalSize} (${group.size} B)`));
@@ -274,6 +274,19 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             const includes = this.searchFolder ? new vscode.RelativePattern(this.searchFolder, '**/*') : '';
+            vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: localize('progress.searchFiles'),
+                    cancellable: true,
+                },
+                async (progress, token) => {
+                    token.onCancellationRequested(this.stop, this);
+                    this.stopSearchToken.token.onCancellationRequested(() => {
+                        progress.report({ increment: 100 });
+                    });
+                },
+            );
             vscode.workspace.findFiles(includes, pattern, MAX_RESULT, this.stopSearchToken.token).then(async (uris) => {
                 try {
                     // let timeStamp = +new Date();
@@ -419,7 +432,11 @@ export function activate(context: vscode.ExtensionContext) {
         let confirm = localize('btn.confirm');
         let cancel = localize('btn.cancel');
         let res = await vscode.window.showWarningMessage(
-            localize('msg.warn.confirmDeleteGroup', `${treeItem.label}` || localize('msg.emptyExt')),
+            localize(
+                'msg.warn.confirmDeleteGroup',
+                `${treeItem.label}` || localize('msg.emptyExt'),
+                treeItem.children.length + ''
+            ),
             confirm,
             cancel,
         );
