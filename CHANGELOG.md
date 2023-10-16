@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.1.4] - 2023-10-16
+
+### Added
+
+- add searching progress notification
+
 ## [0.1.3] - 2023-08-27
 
 ### Added

@@ -83,6 +83,7 @@ Open explorer and click to open the size-tree tab.
 [![Size Tree Screen Shot][product-screenshot]](https://github.com/jackiotyu/size-tree)
 
 * show file detail 展示文件详情
+* stop searching files by click the `Cancel` button in notification of searching progress. 点击搜索进度提示的`取消`按钮可以中止搜索
 
 
 
@@ -100,6 +101,7 @@ Open explorer and click to open the size-tree tab.
 - [x] sort by name
 - [x] reveal in explorer
 - [x] reveal in system explorer
+- [x] stop searching manually
 - [ ] Multi-language Support
     - [x] Chinese
 
