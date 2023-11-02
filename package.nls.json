@@ -1,5 +1,5 @@
 {
-    "cmd.refresh": "Refresh size tree",
+    "cmd.refresh": "Refresh Size-Tree",
     "cmd.sortByName": "Sort by name",
     "cmd.sortBySize": "Sort by size",
     "cmd.descend": "Descend",
@@ -15,7 +15,7 @@
     "cmd.openSetting": "Open size-tree setting",
     "cmd.searchInFolder": "📦 List folder's files in size-tree",
     "cmd.clearSearchFolder": "Clear Current Search Folder",
-    "config.title": "Configuration of size-tree",
+    "config.title": "Size-Tree",
     "config.useExcludeDefault.desc": "default exclude from `files.exclude` & `search.exclude`",
     "config.showSearchInExplorerContextMenu.desc": "whether show search command in explorer context menu",
     "config.ignoreRule.desc": "set ignore folder or file, eg: dist dist-* *.test.js",
