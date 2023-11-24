@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.1.5] - 2023-11-24
+
+### Change
+
+- prevent refresh when close panel
+
+# Change Log
+
 ## [0.1.4] - 2023-10-16
 
 ### Added
