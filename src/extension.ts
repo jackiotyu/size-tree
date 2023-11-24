@@ -139,6 +139,7 @@ export function activate(context: vscode.ExtensionContext) {
         private stopSearchToken: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
         private useExclude: boolean = true;
         private ignoreRule: string[] = [];
+        private _visible = true;
         constructor() {
             refreshEvent.event(this.refresh);
             sortEvent.event(this.sort);
@@ -203,6 +204,9 @@ export function activate(context: vscode.ExtensionContext) {
             this._searchFolder = folder;
             this.refresh();
         }
+        set visible(visible: boolean) {
+            this._visible = visible;
+        }
         handleGroup = (group: boolean) => {
             this.group = group;
             this._onDidChangeTreeData.fire();
@@ -253,6 +257,7 @@ export function activate(context: vscode.ExtensionContext) {
             this._onDidChangeTreeData.fire();
         }
         refresh = () => {
+            if(!this._visible) {return;};
             const MAX_RESULT = 3000000;
             this.stopSearchToken.cancel();
             this.stopSearchToken.dispose();
@@ -385,7 +390,12 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     sizeTreeView.onDidChangeVisibility((event) => {
-        !event.visible && sizeTreeDateProvider.stop();
+        sizeTreeDateProvider.visible = event.visible;
+        if(!event.visible) {
+            sizeTreeDateProvider.stop();
+        } else {
+            sizeTreeDateProvider.refresh();
+        }
     });
 
     sizeTreeDateProvider.onDidChangeTreeData(() => {
