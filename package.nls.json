@@ -19,6 +19,7 @@
     "config.useExcludeDefault.desc": "default exclude from `files.exclude` & `search.exclude`",
     "config.showSearchInExplorerContextMenu.desc": "whether show search command in explorer context menu",
     "config.ignoreRule.desc": "set ignore folder or file, eg: dist dist-* *.test.js",
+    "config.useCheckbox.desc": "Using checkbox in treeView",
     "btn.confirm": "Confirm",
     "btn.cancel": "Cancel",
     "msg.error.invalidFolder": "Current folder invalid, Please select folder in explorer.",

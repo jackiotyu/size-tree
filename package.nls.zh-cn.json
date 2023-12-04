@@ -19,6 +19,7 @@
     "config.useExcludeDefault.desc": "默认排除 `files.exclude` 和 `search.exclude` 设置的目录",
     "config.showSearchInExplorerContextMenu.desc": "是否在资源管理器上下文菜单中展示搜索命令 ",
     "config.ignoreRule.desc": "设置排除的目录或文件, 例如: dist dist-* *.test.js",
+    "config.useCheckbox.desc": "在树视图上使用checkbox",
     "btn.confirm": "确定",
     "btn.cancel": "取消",
     "msg.error.invalidFolder": "当前目录无效,请在资源管理器中选择文件夹",

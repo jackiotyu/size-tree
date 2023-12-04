@@ -228,6 +228,11 @@
           "group": "delete@1"
         },
         {
+          "command": "size-tree.deleteSelected",
+          "when": "view == sizeTree && viewItem == sizeTree.fileGroup && config.sizeTree.useCheckbox",
+          "group": "delete@1"
+        },
+        {
           "command": "size-tree.revealInExplorer",
           "when": "view == sizeTree && viewItem == sizeTree.fileItem",
           "group": "reveal@1"
@@ -282,6 +287,12 @@
           "type": "boolean",
           "description": "%config.showSearchInExplorerContextMenu.desc%",
           "scope": "resource",
+          "default": true
+        },
+        "sizeTree.useCheckbox": {
+          "type": "boolean",
+          "description": "%config.useCheckbox.desc%",
+          "scope": "application",
           "default": true
         }
       }

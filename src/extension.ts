@@ -40,6 +40,7 @@ enum TreeItemType {
 enum Configuration {
     useExcludeDefault = 'useExcludeDefault',
     ignoreRule = 'ignoreRule',
+    useCheckbox = 'useCheckbox',
 }
 
 interface FileInfo {
@@ -67,6 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
     init(context.extensionPath);
 
     workerPool = new WorkerPool(path.resolve(__dirname, './worker.js'), cpusLength);
+    const checkItemSet: Set<string> = new Set();
 
     const viewId = 'sizeTree';
     const refreshEvent = new vscode.EventEmitter<void>();
@@ -94,6 +96,9 @@ export function activate(context: vscode.ExtensionContext) {
                 localize('treeItem.tooltip.size', `${file.humanReadableSize} (${file.size} B)`),
             );
             this.description = `${file.humanReadableSize}`;
+            if (sizeTreeDateProvider.useCheckbox) {
+                this.checkboxState = vscode.TreeItemCheckboxState.Unchecked;
+            }
             this.contextValue = TreeItemContext.fileItem;
             this.command = {
                 command: 'vscode.open',
@@ -121,6 +126,9 @@ export function activate(context: vscode.ExtensionContext) {
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.total', `${count}`));
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.size', `${totalSize} (${group.size} B)`));
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.percent', `${percent.toFixed(5)}%`));
+            if (sizeTreeDateProvider.useCheckbox) {
+                this.checkboxState = vscode.TreeItemCheckboxState.Unchecked;
+            }
             this.children = children;
             this.contextValue = TreeItemContext.fileGroup;
         }
@@ -140,28 +148,40 @@ export function activate(context: vscode.ExtensionContext) {
         private useExclude: boolean = true;
         private ignoreRule: string[] = [];
         private _visible = true;
+        private _initFinish = false;
+        private _useCheckbox = this.useCheckbox;
         constructor() {
             refreshEvent.event(this.refresh);
             sortEvent.event(this.sort);
             groupEvent.event(this.handleGroup);
-            if (!this.updateExcludeSetting()) {
-                this.refresh();
-            }
+            this._onDidChangeTreeData.event(() => checkItemSet.clear());
+            this.updateSetting();
+            this.refresh().finally(() => (this._initFinish = true));
             vscode.commands.executeCommand('setContext', 'sizeTree.asc', this._asc);
             vscode.commands.executeCommand('setContext', 'sizeTree.sortKey', this._sortKey);
             vscode.commands.executeCommand('setContext', 'sizeTree.group', this._group);
             vscode.commands.executeCommand('setContext', 'sizeTree.searchFolder', false);
         }
-        updateExcludeSetting() {
+        updateSetting(checkRefresh: boolean = false) {
             const ignoreRule = vscode.workspace.getConfiguration(viewId).get<string[]>(Configuration.ignoreRule) || [];
             const useExclude = !!vscode.workspace
                 .getConfiguration(viewId)
                 .get<boolean>(Configuration.useExcludeDefault);
-            const needRefresh = this.ignoreRule.toString() !== ignoreRule.toString() || useExclude !== this.useExclude;
+            const needRefresh =
+                this.ignoreRule.toString() !== ignoreRule.toString() ||
+                useExclude !== this.useExclude ||
+                this._useCheckbox !== this.useCheckbox;
             this.ignoreRule = ignoreRule;
             this.useExclude = useExclude;
-            needRefresh && this.refresh();
+            checkRefresh && needRefresh && this.refresh();
+            this._useCheckbox = this.useCheckbox;
             return needRefresh;
+        }
+        get useCheckbox() {
+            return vscode.workspace.getConfiguration(viewId).get<boolean>(Configuration.useCheckbox, false);
+        }
+        manualChange() {
+            this._onDidChangeTreeData.fire();
         }
         search(fsPath: string) {
             return this.files.find((file) => file.fsPath === fsPath);
@@ -206,6 +226,12 @@ export function activate(context: vscode.ExtensionContext) {
         }
         set visible(visible: boolean) {
             this._visible = visible;
+            if (!this._initFinish) return;
+            if (visible) {
+                this.refresh();
+            } else {
+                this.stop();
+            }
         }
         handleGroup = (group: boolean) => {
             this.group = group;
@@ -256,8 +282,8 @@ export function activate(context: vscode.ExtensionContext) {
             this.files = this.files.sort(this.sortFunc);
             this._onDidChangeTreeData.fire();
         }
-        refresh = () => {
-            if(!this._visible) {return;};
+        refresh = async () => {
+            if (!this._visible) return;
             const MAX_RESULT = 3000000;
             this.stopSearchToken.cancel();
             this.stopSearchToken.dispose();
@@ -292,36 +318,38 @@ export function activate(context: vscode.ExtensionContext) {
                     });
                 },
             );
-            vscode.workspace.findFiles(includes, pattern, MAX_RESULT, this.stopSearchToken.token).then(async (uris) => {
-                try {
-                    // let timeStamp = +new Date();
-                    // const name = 'workerRun' + timeStamp;
-                    // console.time(name);
-                    let fsPathList = uris.map((i) => i.fsPath);
-                    let cpuNum = cpusLength;
-                    let chunkNum = Math.min(Math.floor(fsPathList.length / cpuNum), 400) || 1;
-                    let splitFsPathList = chunkList(fsPathList, chunkNum);
-                    let stop = false;
-                    this.stopSearchToken.token.onCancellationRequested(() => {
-                        workerPool.stop();
-                        stop = true;
-                    });
-                    let fileInfoList = await Promise.all(
-                        splitFsPathList.map((fsPathList) => {
-                            if (stop) {
-                                throw Error('isStop');
-                            }
-                            return workerPool.run<string[], FileInfo>(fsPathList);
-                        }),
-                    );
-                    this.files = fileInfoList.flat(1);
-                    // console.timeEnd(name);
-                    this.files = this.files.sort(this.sortFunc);
-                    this._onDidChangeTreeData.fire();
-                } catch (err) {
-                    console.log('err', err);
-                }
-            });
+            return vscode.workspace
+                .findFiles(includes, pattern, MAX_RESULT, this.stopSearchToken.token)
+                .then(async (uris) => {
+                    try {
+                        // let timeStamp = +new Date();
+                        // const name = 'workerRun' + timeStamp;
+                        // console.time(name);
+                        let fsPathList = uris.map((i) => i.fsPath);
+                        let cpuNum = cpusLength;
+                        let chunkNum = Math.min(Math.floor(fsPathList.length / cpuNum), 400) || 1;
+                        let splitFsPathList = chunkList(fsPathList, chunkNum);
+                        let stop = false;
+                        this.stopSearchToken.token.onCancellationRequested(() => {
+                            workerPool.stop();
+                            stop = true;
+                        });
+                        let fileInfoList = await Promise.all(
+                            splitFsPathList.map((fsPathList) => {
+                                if (stop) {
+                                    throw Error('isStop');
+                                }
+                                return workerPool.run<string[], FileInfo>(fsPathList);
+                            }),
+                        );
+                        this.files = fileInfoList.flat(1);
+                        // console.timeEnd(name);
+                        this.files = this.files.sort(this.sortFunc);
+                        this._onDidChangeTreeData.fire();
+                    } catch (err) {
+                        console.log('err', err);
+                    }
+                });
         };
         stop() {
             this.stopSearchToken.cancel();
@@ -391,11 +419,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     sizeTreeView.onDidChangeVisibility((event) => {
         sizeTreeDateProvider.visible = event.visible;
-        if(!event.visible) {
-            sizeTreeDateProvider.stop();
-        } else {
-            sizeTreeDateProvider.refresh();
-        }
     });
 
     sizeTreeDateProvider.onDidChangeTreeData(() => {
@@ -410,15 +433,38 @@ export function activate(context: vscode.ExtensionContext) {
         );
     });
 
-    const refresh = () => refreshEvent.fire();
+    sizeTreeView.onDidChangeCheckboxState &&
+        sizeTreeView.onDidChangeCheckboxState((event) => {
+            if (!sizeTreeDateProvider.useCheckbox) return;
+            const groupCheckChange = (group: FileTypeItem, checked: boolean) => {
+                checked
+                    ? group.children.forEach((item) => checkItemSet.add(item.fsPath))
+                    : group.children.forEach((item) => checkItemSet.delete(item.fsPath));
+            };
+            const fileCheckChange = (item: TreeItem, checked: boolean) => {
+                checked ? checkItemSet.add(item.resourceUri!.fsPath) : checkItemSet.delete(item.resourceUri!.fsPath);
+            };
+            event.items.forEach((arr) => {
+                const [item, state] = arr;
+                const checked = state === vscode.TreeItemCheckboxState.Checked;
+                item.type === TreeItemType.fileGroup ? groupCheckChange(item, checked) : fileCheckChange(item, checked);
+            });
+        });
+
+    const refresh = () => {
+        refreshEvent.fire();
+    };
     const sortByName = () => sortEvent.fire('size');
     const sortBySize = () => sortEvent.fire('name');
     const toggleSort = () => sortEvent.fire('toggleSort');
     const deleteSelected = async (treeItem: TreeItem, selectedItems: TreeItem[]) => {
-        let items = !selectedItems?.length ? [treeItem] : selectedItems;
-        if (!items?.length) {
-            return;
+        let items: string[];
+        if (sizeTreeDateProvider.useCheckbox) {
+            items = [...checkItemSet];
+        } else {
+            items = (!selectedItems?.length ? [treeItem] : selectedItems).map((item) => item.resourceUri!.fsPath);
         }
+        if (!items?.length) return;
         let confirm = localize('btn.confirm');
         let cancel = localize('btn.cancel');
         let res = await vscode.window.showWarningMessage(
@@ -426,13 +472,10 @@ export function activate(context: vscode.ExtensionContext) {
             confirm,
             cancel,
         );
-        if (res !== confirm) {
-            return;
-        }
+        if (res !== confirm) return;
         Promise.allSettled(
             items.map((item) => {
-                let fsPath = item.resourceUri!.fsPath;
-                return fs.rm(fsPath);
+                return fs.rm(item);
             }),
         ).then(() => {
             fileCallback();
@@ -445,14 +488,12 @@ export function activate(context: vscode.ExtensionContext) {
             localize(
                 'msg.warn.confirmDeleteGroup',
                 `${treeItem.label}` || localize('msg.emptyExt'),
-                treeItem.children.length + ''
+                treeItem.children.length + '',
             ),
             confirm,
             cancel,
         );
-        if (res !== confirm) {
-            return;
-        }
+        if (res !== confirm) return;
         let items = treeItem.children.map((i) => i.fsPath);
         Promise.allSettled(items.map((fsPath) => fs.rm(fsPath))).then(() => {
             fileCallback();
@@ -471,9 +512,7 @@ export function activate(context: vscode.ExtensionContext) {
     };
     const copyFilePath = (isRelativePath: boolean, item: TreeItem) => {
         let fsPath = item.resourceUri?.fsPath;
-        if (!fsPath) {
-            return;
-        }
+        if (!fsPath) return;
         if (isRelativePath) {
             vscode.commands.executeCommand('copyRelativeFilePath', vscode.Uri.file(fsPath));
         } else {
@@ -529,13 +568,12 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.workspace.onDidDeleteFiles(fileCallback),
         vscode.workspace.onDidRenameFiles(fileCallback),
         vscode.workspace.onDidChangeConfiguration((event) => {
-            if (!event.affectsConfiguration(viewId)) {
-                return;
-            }
-            sizeTreeDateProvider.updateExcludeSetting();
+            if (!event.affectsConfiguration(viewId)) return;
+            sizeTreeDateProvider.updateSetting(true);
         }),
     );
     context.subscriptions.push(refreshEvent, sortEvent, groupEvent, sizeTreeVisibleEvent);
+    context.subscriptions.push({ dispose: () => checkItemSet.clear() });
 }
 
 // This method is called when your extension is deactivated
