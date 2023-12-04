@@ -5,7 +5,7 @@
   "description": "Quick show all file size and delete files by one click. 快速展示所有文件大小、一键删除多个文件",
   "version": "0.1.6",
   "engines": {
-    "vscode": "^1.78.0"
+    "vscode": "^1.80.0"
   },
   "categories": [
     "Other"
@@ -313,7 +313,7 @@
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
-    "@types/vscode": "^1.78.0",
+    "@types/vscode": "^1.80.0",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
     "@vscode/test-electron": "^2.3.0",
