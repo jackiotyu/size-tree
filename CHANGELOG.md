@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.1.6] - 2023-12-04
+
+### Added
+
+- using checkbox in treeView for select files
+- change README
+
+# Change Log
+
 ## [0.1.5] - 2023-11-24
 
 ### Change

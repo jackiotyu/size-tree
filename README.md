@@ -12,7 +12,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/jackiotyu/size-tree">
-    <img src="https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/icon.png" alt="Logo" width="80" height="80">
+    <img src="https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.4/images/icon.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Size Tree</h3>
@@ -85,6 +85,9 @@ Open explorer and click to open the size-tree tab.
 * show file detail 展示文件详情
 * stop searching files by click the `Cancel` button in notification of searching progress. 点击搜索进度提示的`取消`按钮可以中止搜索
 
+[![Checkbox Screen Shot][checkbox-screenshot]](https://github.com/jackiotyu/size-tree)
+* using checkbox in treeView for select files. 在树视图上使用 checkbox 选中文件
+
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -102,6 +105,7 @@ Open explorer and click to open the size-tree tab.
 - [x] reveal in explorer
 - [x] reveal in system explorer
 - [x] stop searching manually
+- [x] use checkbox in treeView
 - [ ] Multi-language Support
     - [x] Chinese
 
@@ -150,8 +154,9 @@ Project Link: [https://github.com/jackiotyu/size-tree](https://github.com/jackio
 [issues-url]: https://github.com/jackiotyu/size-tree/issues
 [license-shield]: https://img.shields.io/github/license/jackiotyu/size-tree.svg?style=for-the-badge
 [license-url]: https://github.com/jackiotyu/size-tree/blob/master/LICENSE
-[context-menu-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/context-menu-screenshot.png
-[product-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/product-screenshot.png
-[sort-setting-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/sort-setting-screenshot.png
-[open-setting-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/open-setting-screenshot.png
-[action-preview]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.3/images/preview.gif
+[context-menu-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.4/images/context-menu-screenshot.png
+[product-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.4/images/product-screenshot.png
+[sort-setting-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.4/images/sort-setting-screenshot.png
+[open-setting-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.4/images/open-setting-screenshot.png
+[checkbox-screenshot]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.4/images/checkbox-screenshot.png
+[action-preview]: https://cdn.jsdelivr.net/gh/jackiotyu/size-tree@0.1.4/images/preview.gif
