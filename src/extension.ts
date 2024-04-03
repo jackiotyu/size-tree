@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { resolvePatterns, IExpression, chunkList, convertBytes } from './utils';
+import { resolvePatterns, IExpression, chunkList, convertBytes, debounce } from './utils';
 import { WorkerPool } from './worker-pool';
 
 import { init, localize } from 'vscode-nls-i18n';
@@ -68,13 +68,35 @@ export function activate(context: vscode.ExtensionContext) {
     init(context.extensionPath);
 
     workerPool = new WorkerPool(path.resolve(__dirname, './worker.js'), cpusLength);
-    const checkItemSet: Set<string> = new Set();
 
     const viewId = 'sizeTree';
     const refreshEvent = new vscode.EventEmitter<void>();
     const sortEvent = new vscode.EventEmitter<SortType>();
     const groupEvent = new vscode.EventEmitter<boolean>();
     const sizeTreeVisibleEvent = new vscode.EventEmitter<boolean>();
+    const refreshSelectedEvent = new vscode.EventEmitter<void>();
+
+    class ProxySet<T> extends Set<T> {
+        private triggerUpdate = debounce(() => {
+            try {
+                refreshSelectedEvent.fire();
+            } catch {}
+        }, 60);
+        add(value: T) {
+            this.triggerUpdate();
+            return super.add(value);
+        }
+        delete (value: T) {
+            this.triggerUpdate();
+            return super.delete(value);
+        }
+        clear () {
+            this.triggerUpdate();
+            return super.clear();
+        }
+    }
+
+    const checkItemSet = new ProxySet<string>();
     const badgeTag = 'SizeTreeBadge';
 
     class TreeItem extends vscode.TreeItem {
@@ -191,6 +213,9 @@ export function activate(context: vscode.ExtensionContext) {
         }
         get count() {
             return this.files.length;
+        }
+        get filesMap() {
+            return new Map(this.files.map(item => [item.fsPath, item]));
         }
         get asc() {
             return this._asc;
@@ -417,14 +442,31 @@ export function activate(context: vscode.ExtensionContext) {
         canSelectMany: true,
     });
 
+    const updateTreeViewMessage = () => {
+        const totalSize = convertBytes(sizeTreeDateProvider.totalSize);
+        const count = sizeTreeDateProvider.count;
+        let message = localize('tree.desc.message', `${count}`, `${totalSize}`);
+        // 展示选中文件数和大小
+        if(checkItemSet.size) {
+            const filesMap = sizeTreeDateProvider.filesMap;
+            const selectedItems = [...checkItemSet].map(fsPath => filesMap.get(fsPath)).filter(i => i) as FileInfo[];
+            const selectedSize = selectedItems.reduce<number>((totalSize, item) => totalSize += item.size, 0);
+            const selectedCount = `${selectedItems.length}`;
+            message += ` ⋅ ${localize('tree.desc.selectMessage', selectedCount, `${convertBytes(selectedSize)}` )}`;
+        }
+        sizeTreeView.message = message;
+    };
+
+    refreshSelectedEvent.event(() => {
+        updateTreeViewMessage();
+    });
+
     sizeTreeView.onDidChangeVisibility((event) => {
         sizeTreeDateProvider.visible = event.visible;
     });
 
     sizeTreeDateProvider.onDidChangeTreeData(() => {
-        const totalSize = convertBytes(sizeTreeDateProvider.totalSize);
-        const count = sizeTreeDateProvider.count;
-        sizeTreeView.message = localize('tree.desc.message', `${totalSize}`, `${count}`);
+        updateTreeViewMessage();
         sizeTreeView.description = localize(
             'tree.desc.findIn',
             sizeTreeDateProvider.searchFolder
@@ -572,7 +614,7 @@ export function activate(context: vscode.ExtensionContext) {
             sizeTreeDateProvider.updateSetting(true);
         }),
     );
-    context.subscriptions.push(refreshEvent, sortEvent, groupEvent, sizeTreeVisibleEvent);
+    context.subscriptions.push(refreshEvent, sortEvent, groupEvent, sizeTreeVisibleEvent, refreshSelectedEvent);
     context.subscriptions.push({ dispose: () => checkItemSet.clear() });
 }
 

@@ -276,12 +276,12 @@
         },
         "sizeTree.ignoreRule": {
           "type": "array",
-          "description": "%config.ignoreRule.desc%",
+          "markdownDescription": "%config.ignoreRule.desc%",
           "items": {
             "type": "string"
           },
           "scope": "resource",
-          "default": []
+          "default": ["dist"]
         },
         "sizeTree.showSearchInExplorerContextMenu": {
           "type": "boolean",

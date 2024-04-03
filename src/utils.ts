@@ -41,3 +41,30 @@ export const convertBytes = function (bytes: number) {
 	}
 	return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
 };
+
+/**
+ * @desc 函数防抖
+ * @param func 函数
+ * @param wait 延迟执行毫秒数
+ * @param immediate true 表立即执行，false 表非立即执行
+ */
+export function debounce(func: Function, wait: number, immediate?: boolean) {
+    let timeout: NodeJS.Timeout | null;
+    return function (this: any, ...params: any[]) {
+        const context = this;
+        const args = params;
+        if (timeout) clearTimeout(timeout);
+        if (immediate) {
+            const callNow = !timeout;
+            timeout = setTimeout(() => {
+                timeout = null;
+            }, wait);
+            if (callNow) func.apply(context, args);
+        }
+        else {
+            timeout = setTimeout(() =>  {
+                func.apply(context, args);
+            }, wait);
+        }
+    };
+}
