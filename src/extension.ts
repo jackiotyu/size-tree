@@ -486,11 +486,21 @@ export function activate(context: vscode.ExtensionContext) {
             const fileCheckChange = (item: TreeItem, checked: boolean) => {
                 checked ? checkItemSet.add(item.resourceUri!.fsPath) : checkItemSet.delete(item.resourceUri!.fsPath);
             };
-            event.items.forEach((arr) => {
-                const [item, state] = arr;
-                const checked = state === vscode.TreeItemCheckboxState.Checked;
-                item.type === TreeItemType.fileGroup ? groupCheckChange(item, checked) : fileCheckChange(item, checked);
+            let childItems: Array<[TreeItem, vscode.TreeItemCheckboxState]> = [];
+            let parentItems: Array<[FileTypeItem, vscode.TreeItemCheckboxState]> = [];
+            event.items.forEach(([item, state]) => {
+                if(item.type === TreeItemType.fileGroup) parentItems.push([item, state]);
+                else childItems.push([item, state]);
             });
+            if(childItems.length) {
+                childItems.forEach(([item, state]) => {
+                    fileCheckChange(item, state === vscode.TreeItemCheckboxState.Checked);
+                });
+            } else {
+                parentItems.forEach(([item, state]) => {
+                    groupCheckChange(item, state === vscode.TreeItemCheckboxState.Checked);
+                });
+            }
         });
 
     const refresh = () => {
