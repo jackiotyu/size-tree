@@ -3,7 +3,7 @@
   "name": "size-tree",
   "displayName": "Size Tree",
   "description": "Quick show all file size and delete files by one click. 快速展示所有文件大小、一键删除多个文件",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "engines": {
     "vscode": "^1.80.0"
   },

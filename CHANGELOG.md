@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.1.7] - 2024-04-03
+
+### Added
+
+- Display the selected quantity and total size in the "view message".
+- Add glob patterns description.
+
+# Change Log
+
 ## [0.1.6] - 2023-12-04
 
 ### Added
