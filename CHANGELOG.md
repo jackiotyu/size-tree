@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.1.8] - 2024-04-03
+
+### Fixed
+
+- Fix the logic for deselecting sub-options.
+
 ## [0.1.7] - 2024-04-03
 
 ### Added

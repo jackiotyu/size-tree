@@ -3,7 +3,7 @@
   "name": "size-tree",
   "displayName": "Size Tree",
   "description": "Quick show all file size and delete files by one click. 快速展示所有文件大小、一键删除多个文件",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -21,8 +21,10 @@
   "keywords": [
     "file size tree",
     "delete files",
+    "calculate the size and quantity of files",
     "文件大小",
-    "删除文件"
+    "删除文件",
+    "统计文件大小和数量"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
