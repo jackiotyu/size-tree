@@ -20,6 +20,8 @@
     "config.showSearchInExplorerContextMenu.desc": "是否在资源管理器上下文菜单中展示搜索命令 ",
     "config.ignoreRule.desc": "设置排除的目录或文件, 参考[官方glob patterns介绍](https://code.visualstudio.com/docs/editor/glob-patterns)或者[glob表达式介绍](https://www.jianshu.com/p/91eb8d81da64)。例如: dist dist-* *.test.js",
     "config.useCheckbox.desc": "在树视图上使用checkbox",
+    "config.imagePreview.desc": "是否在鼠标悬停在图片文件时展示预览图",
+    "config.imagePreviewMaxHeight.desc": "预览图高度",
     "btn.confirm": "确定",
     "btn.cancel": "取消",
     "msg.error.invalidFolder": "当前目录无效,请在资源管理器中选择文件夹",

@@ -4,6 +4,7 @@ import path from 'path';
 import os from 'os';
 import { resolvePatterns, IExpression, chunkList, convertBytes, debounce } from './utils';
 import { WorkerPool } from './worker-pool';
+import imageExtensions from 'image-extensions';
 
 import { init, localize } from 'vscode-nls-i18n';
 
@@ -41,6 +42,8 @@ enum Configuration {
     useExcludeDefault = 'useExcludeDefault',
     ignoreRule = 'ignoreRule',
     useCheckbox = 'useCheckbox',
+    imagePreview = 'imagePreview',
+    imagePreviewMaxHeight = 'imagePreviewMaxHeight',
 }
 
 interface FileInfo {
@@ -75,6 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
     const groupEvent = new vscode.EventEmitter<boolean>();
     const sizeTreeVisibleEvent = new vscode.EventEmitter<boolean>();
     const refreshSelectedEvent = new vscode.EventEmitter<void>();
+    const imgExtMap = new Map<string, boolean>(imageExtensions.map((item) => ['.' + item, true]));
 
     class ProxySet<T> extends Set<T> {
         private triggerUpdate = debounce(() => {
@@ -86,11 +90,11 @@ export function activate(context: vscode.ExtensionContext) {
             this.triggerUpdate();
             return super.add(value);
         }
-        delete (value: T) {
+        delete(value: T) {
             this.triggerUpdate();
             return super.delete(value);
         }
-        clear () {
+        clear() {
             this.triggerUpdate();
             return super.clear();
         }
@@ -111,12 +115,23 @@ export function activate(context: vscode.ExtensionContext) {
                 collapsibleState,
             );
             this.iconPath = vscode.ThemeIcon.File;
+
             this.tooltip = new vscode.MarkdownString(``, true);
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.name', file.filename));
             this.tooltip.appendMarkdown(localize('treeItem.tooltip.path', file.fsPath));
             this.tooltip.appendMarkdown(
                 localize('treeItem.tooltip.size', `${file.humanReadableSize} (${file.size} B)`),
             );
+            const showImg = vscode.workspace
+                .getConfiguration(viewId)
+                .get<boolean>(Configuration.imagePreview, true);
+            if (showImg && imgExtMap.has(path.extname(file.filename))) {
+                const maxHeight = vscode.workspace
+                    .getConfiguration(viewId)
+                    .get<number>(Configuration.imagePreviewMaxHeight, 300);
+                this.tooltip.appendMarkdown(`![${file.filename}](${fileUri}|height=${maxHeight})`);
+            }
+
             this.description = `${file.humanReadableSize}`;
             if (sizeTreeDateProvider.useCheckbox) {
                 this.checkboxState = vscode.TreeItemCheckboxState.Unchecked;
@@ -215,7 +230,7 @@ export function activate(context: vscode.ExtensionContext) {
             return this.files.length;
         }
         get filesMap() {
-            return new Map(this.files.map(item => [item.fsPath, item]));
+            return new Map(this.files.map((item) => [item.fsPath, item]));
         }
         get asc() {
             return this._asc;
@@ -447,12 +462,14 @@ export function activate(context: vscode.ExtensionContext) {
         const count = sizeTreeDateProvider.count;
         let message = localize('tree.desc.message', `${count}`, `${totalSize}`);
         // 展示选中文件数和大小
-        if(checkItemSet.size) {
+        if (checkItemSet.size) {
             const filesMap = sizeTreeDateProvider.filesMap;
-            const selectedItems = [...checkItemSet].map(fsPath => filesMap.get(fsPath)).filter(i => i) as FileInfo[];
-            const selectedSize = selectedItems.reduce<number>((totalSize, item) => totalSize += item.size, 0);
+            const selectedItems = [...checkItemSet]
+                .map((fsPath) => filesMap.get(fsPath))
+                .filter((i) => i) as FileInfo[];
+            const selectedSize = selectedItems.reduce<number>((totalSize, item) => (totalSize += item.size), 0);
             const selectedCount = `${selectedItems.length}`;
-            message += ` ⋅ ${localize('tree.desc.selectMessage', selectedCount, `${convertBytes(selectedSize)}` )}`;
+            message += ` ⋅ ${localize('tree.desc.selectMessage', selectedCount, `${convertBytes(selectedSize)}`)}`;
         }
         sizeTreeView.message = message;
     };
@@ -489,10 +506,10 @@ export function activate(context: vscode.ExtensionContext) {
             let childItems: Array<[TreeItem, vscode.TreeItemCheckboxState]> = [];
             let parentItems: Array<[FileTypeItem, vscode.TreeItemCheckboxState]> = [];
             event.items.forEach(([item, state]) => {
-                if(item.type === TreeItemType.fileGroup) parentItems.push([item, state]);
+                if (item.type === TreeItemType.fileGroup) parentItems.push([item, state]);
                 else childItems.push([item, state]);
             });
-            if(childItems.length) {
+            if (childItems.length) {
                 childItems.forEach(([item, state]) => {
                     fileCheckChange(item, state === vscode.TreeItemCheckboxState.Checked);
                 });
