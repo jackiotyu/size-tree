@@ -103,6 +103,16 @@
         "command": "size-tree.clearSearchFolder",
         "title": "%cmd.clearSearchFolder%",
         "icon": "$(search-stop)"
+      },
+      {
+        "command": "size-tree.selectAll",
+        "title": "%cmd.selectAll%",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "size-tree.deselectAll",
+        "title": "%cmd.deselectAll%",
+        "icon": "$(clear-all)"
       }
     ],
     "views": {
@@ -186,6 +196,16 @@
           "command": "size-tree.clearSearchFolder",
           "when": "view == sizeTree && sizeTree.searchFolder",
           "group": "navigation@99"
+        },
+        {
+          "command": "size-tree.selectAll",
+          "when": "view == sizeTree && !sizeTree.selectAll && config.sizeTree.useCheckbox",
+          "group": "navigation@10"
+        },
+        {
+          "command": "size-tree.deselectAll",
+          "when": "view == sizeTree && sizeTree.selectAll && config.sizeTree.useCheckbox",
+          "group": "navigation@10"
         },
         {
           "command": "size-tree.refresh",

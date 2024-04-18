@@ -6,7 +6,6 @@
 			"ES2020"
 		],
 		"sourceMap": true,
-		"rootDir": "src",
 		"rootDirs": ["src", "node_modules/image-extensions"],
 		"strict": true,   /* enable all strict type-checking options */
 		/* Additional Checks */

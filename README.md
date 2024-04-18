@@ -106,6 +106,7 @@ Open explorer and click to open the size-tree tab.
 - [x] reveal in system explorer
 - [x] stop searching manually
 - [x] use checkbox in treeView
+- [ ] select/deselect all
 - [ ] Multi-language Support
     - [x] Chinese
 

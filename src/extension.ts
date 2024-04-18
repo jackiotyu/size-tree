@@ -26,6 +26,8 @@ enum Commands {
     searchInFolder = 'size-tree.searchInFolder',
     clearSearchFolder = 'size-tree.clearSearchFolder',
     deleteGroupFiles = 'size-tree.deleteGroupFiles',
+    selectAll = 'size-tree.selectAll',
+    deselectAll = 'size-tree.deselectAll',
 }
 
 enum TreeItemContext {
@@ -73,7 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
     workerPool = new WorkerPool(path.resolve(__dirname, './worker.js'), cpusLength);
 
     const viewId = 'sizeTree';
-    const refreshEvent = new vscode.EventEmitter<void>();
+    const refreshEvent = new vscode.EventEmitter<boolean | void>();
     const sortEvent = new vscode.EventEmitter<SortType>();
     const groupEvent = new vscode.EventEmitter<boolean>();
     const sizeTreeVisibleEvent = new vscode.EventEmitter<boolean>();
@@ -175,8 +177,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     class SizeTreeDataProvider implements vscode.TreeDataProvider<AllTreeItem> {
         private files: FileInfo[] = [];
-        private _onDidChangeTreeData: vscode.EventEmitter<void> = new vscode.EventEmitter();
-        readonly onDidChangeTreeData: vscode.Event<void> = this._onDidChangeTreeData.event;
+        private items: AllTreeItem[] = [];
+        private _onDidChangeTreeData: vscode.EventEmitter<AllTreeItem | void> = new vscode.EventEmitter();
+        readonly onDidChangeTreeData: vscode.Event<AllTreeItem | void> = this._onDidChangeTreeData.event;
         private _asc: boolean = false;
         private _sortKey: 'filename' | 'size' = 'size';
         private _group: boolean = true;
@@ -191,13 +194,13 @@ export function activate(context: vscode.ExtensionContext) {
             refreshEvent.event(this.refresh);
             sortEvent.event(this.sort);
             groupEvent.event(this.handleGroup);
-            this._onDidChangeTreeData.event(() => checkItemSet.clear());
             this.updateSetting();
             this.refresh().finally(() => (this._initFinish = true));
             vscode.commands.executeCommand('setContext', 'sizeTree.asc', this._asc);
             vscode.commands.executeCommand('setContext', 'sizeTree.sortKey', this._sortKey);
             vscode.commands.executeCommand('setContext', 'sizeTree.group', this._group);
             vscode.commands.executeCommand('setContext', 'sizeTree.searchFolder', false);
+            vscode.commands.executeCommand('setContext', 'sizeTree.selectAll', false);
         }
         updateSetting(checkRefresh: boolean = false) {
             const ignoreRule = vscode.workspace.getConfiguration(viewId).get<string[]>(Configuration.ignoreRule) || [];
@@ -216,9 +219,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
         get useCheckbox() {
             return vscode.workspace.getConfiguration(viewId).get<boolean>(Configuration.useCheckbox, false);
-        }
-        manualChange() {
-            this._onDidChangeTreeData.fire();
         }
         search(fsPath: string) {
             return this.files.find((file) => file.fsPath === fsPath);
@@ -322,8 +322,26 @@ export function activate(context: vscode.ExtensionContext) {
             this.files = this.files.sort(this.sortFunc);
             this._onDidChangeTreeData.fire();
         }
+        checkAll(check: boolean) {
+            if(!check) {
+                checkItemSet.clear();
+                this.items.forEach(item => item.checkboxState = vscode.TreeItemCheckboxState.Unchecked);
+                this._onDidChangeTreeData.fire();
+            } else {
+                this.items.forEach(item => {
+                    item.checkboxState = vscode.TreeItemCheckboxState.Checked;
+                    if(item.type === TreeItemType.fileGroup) {
+                        item.children.forEach(row => checkItemSet.add(row.fsPath));
+                    } else if(item.type === TreeItemType.file && item.resourceUri) {
+                        checkItemSet.add(item.resourceUri.fsPath);
+                    }
+                    this._onDidChangeTreeData.fire(item);
+                });
+            }
+        }
         refresh = async () => {
             if (!this._visible) return;
+            checkItemSet.clear();
             const MAX_RESULT = 3000000;
             this.stopSearchToken.cancel();
             this.stopSearchToken.dispose();
@@ -399,6 +417,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
         getChildren(element?: AllTreeItem | undefined): vscode.ProviderResult<AllTreeItem[]> {
             if (!element) {
+                this.items = [];
                 if (this.group) {
                     let map = new Map<string, FileGroup>();
                     this.files.forEach((file) => {
@@ -416,18 +435,24 @@ export function activate(context: vscode.ExtensionContext) {
                     return [...map.entries()]
                         .sort((a, b) => this.sortFunc(a[1], b[1]))
                         .map(([type, group]) => {
-                            return new FileTypeItem(type, group, vscode.TreeItemCollapsibleState.Collapsed);
+                            const item = new FileTypeItem(type, group, vscode.TreeItemCollapsibleState.Collapsed);
+                            this.items.push(item);
+                            return item;
                         });
                 }
 
                 return this.files.map((file) => {
-                    return new TreeItem(file, vscode.TreeItemCollapsibleState.None);
+                    const item = new TreeItem(file, vscode.TreeItemCollapsibleState.None);
+                    this.items.push(item);
+                    return item;
                 });
             }
 
             if (element.type === TreeItemType.fileGroup) {
                 return element.children.map((file) => {
-                    return new TreeItem(file, vscode.TreeItemCollapsibleState.None);
+                    const item = new TreeItem(file, vscode.TreeItemCollapsibleState.None);
+                    this.items.push(item);
+                    return item;
                 });
             }
 
@@ -468,8 +493,12 @@ export function activate(context: vscode.ExtensionContext) {
                 .map((fsPath) => filesMap.get(fsPath))
                 .filter((i) => i) as FileInfo[];
             const selectedSize = selectedItems.reduce<number>((totalSize, item) => (totalSize += item.size), 0);
-            const selectedCount = `${selectedItems.length}`;
-            message += ` ⋅ ${localize('tree.desc.selectMessage', selectedCount, `${convertBytes(selectedSize)}`)}`;
+            const selectedCount = selectedItems.length;
+            const selectedCountText = `${selectedCount}`;
+            message += ` ⋅ ${localize('tree.desc.selectMessage', selectedCountText, `${convertBytes(selectedSize)}`)}`;
+            vscode.commands.executeCommand('setContext', 'sizeTree.selectAll', count === selectedCount);
+        } else {
+            vscode.commands.executeCommand('setContext', 'sizeTree.selectAll', false);
         }
         sizeTreeView.message = message;
     };
@@ -609,7 +638,12 @@ export function activate(context: vscode.ExtensionContext) {
     const clearSearchFolder = () => {
         sizeTreeDateProvider.searchFolder = void 0;
     };
-
+    const selectAll = () => {
+        sizeTreeDateProvider.checkAll(true);
+    };
+    const deselectAll = () => {
+        sizeTreeDateProvider.checkAll(false);
+    };
     context.subscriptions.push(vscode.window.registerFileDecorationProvider(new FileDecorationProvider()));
     context.subscriptions.push(
         vscode.commands.registerCommand(Commands.refresh, refresh),
@@ -630,6 +664,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand(Commands.searchInFolder, searchInFolder),
         vscode.commands.registerCommand(Commands.clearSearchFolder, clearSearchFolder),
         vscode.commands.registerCommand(Commands.deleteGroupFiles, deleteGroupFiles),
+        vscode.commands.registerCommand(Commands.selectAll, selectAll),
+        vscode.commands.registerCommand(Commands.deselectAll, deselectAll),
     );
     context.subscriptions.push(sizeTreeView);
     context.subscriptions.push(
