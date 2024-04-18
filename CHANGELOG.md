@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.2.0] - 2024-04-18
+
+### Added
+
+- Select/Deselect all files.
+
 ## [0.1.9] - 2024-04-16
 
 ### Added
