@@ -294,12 +294,13 @@ export function activate(context: vscode.ExtensionContext) {
         };
         get sortFunc() {
             let sort: (a: SimpleFileInfo, b: SimpleFileInfo) => number = (a, b) => 0;
+            const compare = new Intl.Collator(undefined, { usage: 'sort', numeric: false }).compare;
             switch (true) {
                 case this.asc && this.sortKey === 'filename':
-                    sort = (a, b) => a.filename.localeCompare(b.filename);
+                    sort = (a, b) => compare(a.filename, b.filename);
                     break;
                 case !this.asc && this.sortKey === 'filename':
-                    sort = (a, b) => b.filename.localeCompare(a.filename);
+                    sort = (a, b) => compare(b.filename, a.filename);
                     break;
                 case this.asc && this.sortKey === 'size':
                     sort = (a, b) => a.size - b.size;
