@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.2.1] - 2024-05-22
+
+### Added
+
+- Adjust sorting rules, using `Intl.Collator`.
+
 ## [0.2.0] - 2024-04-18
 
 ### Added
