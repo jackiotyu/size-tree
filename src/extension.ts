@@ -294,7 +294,7 @@ export function activate(context: vscode.ExtensionContext) {
         };
         get sortFunc() {
             let sort: (a: SimpleFileInfo, b: SimpleFileInfo) => number = (a, b) => 0;
-            const compare = new Intl.Collator(undefined, { usage: 'sort', numeric: false }).compare;
+            const compare = new Intl.Collator(undefined, { usage: 'sort', numeric: true }).compare;
             switch (true) {
                 case this.asc && this.sortKey === 'filename':
                     sort = (a, b) => compare(a.filename, b.filename);
