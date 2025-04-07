@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - run: npx changelogithub
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Install vsce
+        run: pnpm add -g @vscode/vsce
+
+      - name: Package VSIX
+        run: vsce package --no-dependencies --out ./git-worktree-manager-${{ github.ref_name }}.vsix
+
+      - name: Upload Release Artifact
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        run: gh release upload ${{ github.ref_name }} ./git-worktree-manager-${{ github.ref_name }}.vsix
+
+      - name: Publish Extension to VSCode Marketplace
+        run: npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --no-dependencies
+
+      - name: Publish Extension to OVSX
+        run: npx ovsx publish -p ${{ secrets.OVSX_TOKEN }} --no-dependencies
